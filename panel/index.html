@@ -232,48 +232,14 @@
                 <img src="icons/user.svg" alt="" />
               </div>
               <div class="dropdown">
-                <div id="logout-dropdown" class="dropdown-content">
-                  <div
-                    id="logout-info"
-                    style="margin: 10px; text-align: center"
-                  ></div>
-                  <div
-                    id="refresh-login-status"
-                    style="
-                      margin: 10px;
-                      text-align: center;
-                      color: #276EF1;
-                      border-top: 1px solid #d5d8dd;
-                      padding-top: 5px;
-                      cursor: pointer;
-                    "
-                  >
-                    Refresh Login Status
+                <div class="dropdown-menu" id="logout-dropdown">
+                  <div class="dropdown-item">
+                    <span id="logout-info">user@testoriumz.com</span>
                   </div>
-                  <div
-                    id="check-portal-auth"
-                    style="
-                      margin: 10px;
-                      text-align: center;
-                      color: #276EF1;
-                      border-top: 1px solid #d5d8dd;
-                      padding-top: 5px;
-                      cursor: pointer;
-                    "
-                  >
-                    Check Portal Auth
-                  </div>
-                  <div
-                    id="logout-user"
-                    style="
-                      margin: 10px;
-                      text-align: center;
-                      color: #f54966;
-                      border-top: 1px solid #d5d8dd;
-                      padding-top: 5px;
-                    "
-                  >
-                    Log out
+                  <div class="dropdown-item">
+                    <a href="#" id="logout-link" style="color: #dc3545; text-decoration: none; font-weight: 500;">
+                      <i class="fas fa-sign-out-alt"></i> Log out
+                    </a>
                   </div>
                 </div>
               </div>

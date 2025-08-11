@@ -104,27 +104,24 @@ $(() => {
 
   // check sign in status on startup
   browser.storage.local.get("segment").then(async (result) => {
-    let checkedResult = await browser.storage.local.get("checkLoginData");
-
-    if (result.segment?.user && checkedResult.checkLoginData?.isActived) {
-      // Verify the stored authentication is still valid
-      const authStatus = await AuthService.checkPortalAuthentication();
-      if (authStatus.isAuthenticated) {
-        $("#login-user").show();
-        $("#login-button").hide();
-        $("#logout-info").html(result.segment.user);
-        console.log("Startup: User is authenticated");
-      } else {
-        console.log("Startup: Stored authentication is invalid, clearing state");
-        await logout();
+    console.log("Startup: Checking authentication status...");
+    
+    // Always try to get fresh authentication data on startup
+    setTimeout(async () => {
+      try {
+        console.log("Startup: Running fresh authentication check...");
+        const authResult = await updateLoginStatus();
+        console.log("Startup: Authentication check result:", authResult);
+        
+        if (!authResult) {
+          console.log("Startup: No active authentication found, showing login button");
+          updateUIState(false);
+        }
+      } catch (error) {
+        console.error("Startup: Error checking authentication:", error);
+        updateUIState(false);
       }
-    } else {
-      // Try to check authentication status on startup
-      console.log("Startup: No stored authentication, checking current status");
-      setTimeout(async () => {
-        await updateLoginStatus();
-      }, 1000);
-    }
+    }, 1000);
   });
 
   browser.storage.onChanged.addListener(async (changes, areaName) => {
@@ -134,9 +131,9 @@ $(() => {
         changes.checkLoginData.newValue.isActived
       ) {
         const user = changes.checkLoginData.newValue.user;
-        $("#login-user").show();
-        $("#login-button").hide();
-        $("#logout-info").html(user);
+        updateUIState(true, user);
+      } else {
+        updateUIState(false);
       }
     }
   });
@@ -146,14 +143,15 @@ $(() => {
     try {
       console.log("Attempting to update login status...");
       
-      // Use the simplified portal authentication check
-      const authStatus = await AuthService.checkPortalAuthentication();
-      console.log("Portal authentication status:", authStatus);
+      // First, try API-based authentication check (this gets real user data)
+      console.log("Trying API-based authentication check...");
+      const apiAuthStatus = await AuthService.checkAuthViaAPI();
+      console.log("API authentication status:", apiAuthStatus);
       
-      if (authStatus.isAuthenticated && authStatus.user) {
-        const user = authStatus.user;
+      if (apiAuthStatus.isAuthenticated && apiAuthStatus.user) {
+        const user = apiAuthStatus.user;
         const email = user.email || user.user_info || user.username || "user@testoriumz.com";
-        console.log("User authenticated:", email);
+        console.log("User authenticated via API:", email);
         
         // Update storage
         const result = await getCheckLoginData();
@@ -164,20 +162,78 @@ $(() => {
         await browser.storage.local.set(result);
 
         // Update UI
-        $("#login-user").show();
-        $("#login-button").hide();
-        $("#logout-info").html(email);
-        console.log("UI updated to show logged in user");
+        updateUIState(true, email);
+        console.log("UI updated to show logged in user (API)");
 
         // Update segment tracking
         await setSegmentUser(email);
         await trackingLogin();
         
-        console.log("Login status updated successfully");
+        console.log("Login status updated successfully via API");
+        return true;
+      }
+      
+      // If API check fails, try ReportPortal-style authentication check
+      console.log("API check failed, trying ReportPortal-style authentication check...");
+      const rpAuthStatus = await AuthService.checkReportPortalAuth();
+      console.log("ReportPortal authentication status:", rpAuthStatus);
+      
+      if (rpAuthStatus.isAuthenticated && rpAuthStatus.user) {
+        const user = rpAuthStatus.user;
+        const email = user.email || user.user_info || user.username || "user@testoriumz.com";
+        console.log("User authenticated via ReportPortal check:", email);
+        
+        // Update storage
+        const result = await getCheckLoginData();
+        let checkLoginData = result.checkLoginData;
+        checkLoginData.isActived = true;
+        checkLoginData.hasLoggedIn = true;
+        checkLoginData.user = email;
+        await browser.storage.local.set(result);
+
+        // Update UI
+        updateUIState(true, email);
+        console.log("UI updated to show logged in user (ReportPortal)");
+
+        // Update segment tracking
+        await setSegmentUser(email);
+        await trackingLogin();
+        
+        console.log("Login status updated successfully via ReportPortal check");
+        return true;
+      }
+      
+      // If ReportPortal check fails, try portal authentication check
+      console.log("ReportPortal check failed, trying portal authentication check...");
+      const authStatus = await AuthService.checkPortalAuthentication();
+      console.log("Portal authentication status:", authStatus);
+      
+      if (authStatus.isAuthenticated && authStatus.user) {
+        const user = authStatus.user;
+        const email = user.email || user.user_info || user.username || "user@testoriumz.com";
+        console.log("User authenticated via portal check:", email);
+        
+        // Update storage
+        const result = await getCheckLoginData();
+        let checkLoginData = result.checkLoginData;
+        checkLoginData.isActived = true;
+        checkLoginData.hasLoggedIn = true;
+        checkLoginData.user = email;
+        await browser.storage.local.set(result);
+
+        // Update UI
+        updateUIState(true, email);
+        console.log("UI updated to show logged in user (portal check)");
+
+        // Update segment tracking
+        await setSegmentUser(email);
+        await trackingLogin();
+        
+        console.log("Login status updated successfully via portal check");
         return true;
       } else {
-        // Try simple auth check as fallback
-        console.log("Main auth check failed, trying simple auth check...");
+        // Try simple auth check as final fallback
+        console.log("Portal check failed, trying simple auth check...");
         const simpleAuthStatus = await AuthService.simpleAuthCheck();
         console.log("Simple auth check result:", simpleAuthStatus);
         
@@ -195,9 +251,7 @@ $(() => {
           await browser.storage.local.set(result);
 
           // Update UI
-          $("#login-user").show();
-          $("#login-button").hide();
-          $("#logout-info").html(email);
+          updateUIState(true, email);
           console.log("UI updated to show logged in user (simple check)");
 
           // Update segment tracking
@@ -209,12 +263,13 @@ $(() => {
         } else {
           console.log("User not authenticated, clearing login state");
           // Clear login state if not authenticated
-          await logout();
+          updateUIState(false);
           return false;
         }
       }
     } catch (error) {
       console.error("Error updating login status:", error);
+      updateUIState(false);
       return false;
     }
   }
@@ -295,6 +350,11 @@ $(() => {
   // Comprehensive debugging function
   window.debugAuth = async () => {
     console.log("=== AUTHENTICATION DEBUG REPORT ===");
+    
+    // Test API authentication first
+    console.log("Testing API authentication...");
+    const apiAuth = await AuthService.checkAuthViaAPI();
+    console.log("API auth result:", apiAuth);
     
     // Check if portal tabs exist
     const tabs = await browser.tabs.query({ url: "*://reporting.linkfields.com/*" });
@@ -391,24 +451,270 @@ $(() => {
     $("#logout-dropdown").toggle();
   });
 
+  // Function to force refresh login status and clear cache
+  async function forceRefreshLoginStatus() {
+    try {
+      console.log("Force refreshing login status...");
+      
+      // Clear all stored authentication data first
+      await browser.storage.local.remove("accessToken");
+      await browser.storage.local.remove("refreshToken");
+      await browser.storage.local.remove("checkLoginData");
+      await browser.storage.local.remove("userInfo");
+      await browser.storage.local.remove("authToken");
+      await browser.storage.local.remove("lastAuthCheck");
+      
+      console.log("Cleared all stored authentication data");
+      
+      // Wait a moment for the portal to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Now try to update login status
+      const result = await updateLoginStatus();
+      
+      if (result) {
+        console.log("Login status refreshed successfully");
+      } else {
+        console.log("Failed to refresh login status");
+      }
+      
+      return result;
+    } catch (error) {
+      console.error("Error force refreshing login status:", error);
+      return false;
+    }
+  }
+
+  // Add click handler for force refresh
   $("#refresh-login-status").click(async () => {
-    await updateLoginStatus();
-    $("#logout-dropdown").toggle();
+    console.log("Refresh login status clicked");
+    await forceRefreshLoginStatus();
   });
 
+  // Add click handler for check portal auth
   $("#check-portal-auth").click(async () => {
-    console.log("Check Portal Auth button clicked");
-    await window.testPortalAuth();
-    $("#logout-dropdown").toggle();
+    console.log("Check portal auth clicked");
+    await debugAuth();
   });
 
-  $("#logout-user").click(() => {
-    // Clear timeout on signing out manually
-    clearTimeout(setLoginTokenTimeout);
+  // Function to force logout by navigating to portal
+  async function forceLogout() {
+    try {
+      console.log("=== Force Logout by Navigating to Portal ===");
+      
+      // Find or create portal tab
+      let portalTabs = await browser.tabs.query({url: "https://reporting.linkfields.com/*"});
+      
+      if (portalTabs.length === 0) {
+        console.log("No portal tab found, creating new one...");
+        const newTab = await browser.tabs.create({
+          url: "https://reporting.linkfields.com/ui/#login"
+        });
+        portalTabs = [newTab];
+      }
+      
+      console.log("Portal tab ready for logout");
+      
+      // Wait for page to load
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Execute logout script
+      const results = await browser.scripting.executeScript({
+        target: { tabId: portalTabs[0].id },
+        func: () => {
+          try {
+            console.log("Force logout executing...");
+            
+            // Clear everything immediately
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Clear all cookies
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i];
+              const eqPos = cookie.indexOf("=");
+              const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.linkfields.com";
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=linkfields.com";
+            }
+            
+            // Force redirect to login
+            window.location.replace('https://reporting.linkfields.com/ui/#login');
+            
+            return { success: true, message: "Force logout completed" };
+          } catch (error) {
+            return { success: false, error: error.message };
+          }
+        }
+      });
+      
+      console.log("Force logout results:", results);
+      
+      // Clear extension storage
+      const result = await getCheckLoginData();
+      let checkLoginData = result.checkLoginData;
+      checkLoginData.isActived = false;
+      checkLoginData.hasLoggedIn = false;
+      checkLoginData.user = null;
+      await browser.storage.local.set(result);
+      
+      return { success: true, message: "Force logout completed" };
+      
+    } catch (error) {
+      console.error("Error in force logout:", error);
+      return { success: false, error: error.message };
+    }
+  }
 
-    logout();
-    $("#logout-dropdown").toggle();
+  // Function to show beautiful notification
+  function showNotification(message, type = 'info') {
+    const colors = {
+      success: '#28a745',
+      error: '#dc3545',
+      info: '#007bff',
+      warning: '#ffc107'
+    };
+    
+    const icon = {
+      success: '✓',
+      error: '✗',
+      info: 'ℹ',
+      warning: '⚠'
+    };
+    
+    const notification = $(`
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type]};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        max-width: 300px;
+        animation: slideIn 0.3s ease-out;
+      ">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">${icon[type]}</span>
+          <span>${message}</span>
+        </div>
+      </div>
+    `);
+    
+    $('body').append(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      notification.fadeOut(300, function() {
+        $(this).remove();
+      });
+    }, 4000);
+  }
+
+  // Function to update UI based on login status
+  function updateUIState(isLoggedIn, userEmail = null) {
+    if (isLoggedIn && userEmail) {
+      // Show logged in state - profile icon with dropdown
+      $("#login-button").hide();
+      $("#login-user").show();
+      $("#logout-info").html(userEmail);
+    } else {
+      // Show logged out state - only sign in button
+      $("#login-user").hide();
+      $("#login-button").show();
+      $("#logout-dropdown").hide();
+    }
+  }
+
+  // Enhanced manual logout function with beautiful messages
+  async function manualLogout() {
+    try {
+      console.log("=== Manual Logout ===");
+      
+      showNotification("Logging out from portal...", "info");
+      
+      // Use force logout for reliable logout
+      const logoutResult = await forceLogout();
+      console.log("Logout result:", logoutResult);
+      
+      if (logoutResult && logoutResult.success) {
+        // Update UI to show logged out state - only sign in button
+        updateUIState(false);
+        
+        console.log("Logout completed successfully");
+        showNotification("Successfully logged out! You have been signed out from the portal.", "success");
+      } else {
+        console.log("Logout failed:", logoutResult?.error);
+        showNotification("Logout failed. Please try again or manually sign out from the portal.", "error");
+      }
+    } catch (error) {
+      console.error("Error in manual logout:", error);
+      showNotification("Logout error occurred. Please try again.", "error");
+    }
+  }
+
+  // Auto-refresh login status every 30 seconds for better responsiveness
+  setInterval(async () => {
+    try {
+      console.log("Auto-refreshing login status...");
+      const result = await updateLoginStatus();
+      console.log("Auto-refresh result:", result);
+    } catch (error) {
+      console.log("Auto-refresh error:", error);
+    }
+  }, 30 * 1000); // 30 seconds
+
+  // Immediate refresh on startup
+  setTimeout(async () => {
+    try {
+      console.log("Initial login status check...");
+      const result = await updateLoginStatus();
+      console.log("Initial check result:", result);
+    } catch (error) {
+      console.log("Initial check error:", error);
+    }
+  }, 1000);
+
+  // Global function for manual refresh - can be called from console
+  window.refreshLoginStatus = async () => {
+    console.log("Manual login status refresh triggered");
+    try {
+      const result = await updateLoginStatus();
+      console.log("Manual refresh result:", result);
+      return result;
+    } catch (error) {
+      console.error("Manual refresh error:", error);
+      return false;
+    }
+  };
+
+  // Add click handler for logout only
+  $("#logout-link").click(async function(e) {
+    e.preventDefault();
+    await manualLogout();
   });
+
+  // Add CSS for notification animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 
   chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
     if (tab.url.startsWith(REDIRECT_URI) && changeInfo.status === "loading") {
