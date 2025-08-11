@@ -55,6 +55,7 @@ class KSExportDialog extends GenericDialog {
               <option value="new-formatter-puppeteer">Puppeteer</option>
               <option value="new-formatter-puppeteer_w_comment">Puppeteer w Comments</option>
               <option value="new-formatter-puppeteer_json">JSON (puppeteer)</option>
+        <option value="new-formatter-robotframework">Robot Framework</option>
            </select> 
            <input id="export-to-KS-driver-path" type="text" placeholder="Input the path to WebDriver" style="margin-right: 5px;" disabled/>
            <button id="export-to-KS-apply-driver-path" class="disable">Apply</button>

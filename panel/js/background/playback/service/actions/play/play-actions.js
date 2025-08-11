@@ -1,3 +1,46 @@
+// Robot Framework command mapping for background script execution
+const robotFrameworkCommandMap = {
+    'Go To': 'open',
+    'Click Element': 'click',
+    'Click Link': 'click',
+    'Input Text': 'type',
+    'Input Password': 'type',
+    'Select From List By Label': 'select',
+    'Select From List By Value': 'select',
+    'Select From List By Index': 'select',
+    'Submit Form': 'submit',
+    'Wait Until Element Is Visible': 'waitForElementPresent',
+    'Wait Until Element Is Clickable': 'waitForElementPresent',
+    'Wait Until Page Contains': 'waitForText',
+    'Wait Until Page Contains Element': 'waitForElementPresent',
+    'Page Should Contain': 'assertText',
+    'Page Should Not Contain': 'assertNotText',
+    'Element Should Be Visible': 'assertElementPresent',
+    'Element Should Not Be Visible': 'assertElementNotPresent',
+    'Element Should Be Enabled': 'assertElementPresent',
+    'Element Should Be Disabled': 'assertElementPresent',
+    'Get Title': 'storeTitle',
+    'Get Text': 'storeText',
+    'Get Value': 'storeValue',
+    'Capture Page Screenshot': 'captureEntirePageScreenshot',
+    'Sleep': 'pause',
+    'Go Back': 'goBack',
+    'Reload Page': 'refresh',
+    'Switch Window': 'selectWindow',
+    'Switch Frame': 'selectFrame',
+    'Double Click Element': 'doubleClick',
+    'Mouse Over': 'mouseOver',
+    'Drag And Drop': 'dragAndDropToObject',
+    'Press Keys': 'sendKeys',
+    'Clear Element Text': 'clear',
+    'Focus': 'focus',
+    'Scroll Element Into View': 'scrollIntoView',
+    'Close': 'close',
+    'Handle Alert': 'chooseOkOnNextConfirmation',
+    'Choose File': 'attachFile',
+    'Dismiss Action': 'chooseCancelOnNextConfirmation'
+};
+
 import { trackingLocalPlayback } from "../../../../../UI/services/tracking-service/playback-local-tracking.js";
 import {
   addBrokenLocator,
@@ -42,6 +85,7 @@ import { parseData } from "../../../../../UI/services/data-file-service/data-fil
 import { executeAppendToJSON } from "./execute-appendToJSON.js";
 // import { checkLoginOrSignupUserForPlayTestSuite } from "../../../../../../../content-marketing/panel/popup-play-suite-quota.js";
 import { testExecutionDialog } from "../../../../../UI/view/dialog/test-execution-dialog.js";
+import RecorderIntegrationService from "../../../../../UI/services/recorder-integration-service/recorder-integration-service.js";
 
 let blockStack = [];
 let labels = {};
@@ -349,6 +393,11 @@ function playSuite(i) {
         trackingExecuteTestSuites("suite");
       }
       trackingLocalPlayback("selfHealing", isSelfHealingInvoke);
+      
+      // Upload test suite data to report portal when test suite is completed
+      RecorderIntegrationService.onTestSuiteExecutionComplete().catch(error => {
+        console.error("Failed to upload test suite data to report portal:", error);
+      });
     }
   }
 }
@@ -374,6 +423,11 @@ function playSuites(i) {
     switchPS();
     trackingExecuteTestSuites("all");
     trackingLocalPlayback("selfHealing", isSelfHealingInvoke);
+    
+    // Upload all test suites data to report portal when all test suites are completed
+    RecorderIntegrationService.onTestSuiteExecutionComplete().catch(error => {
+      console.error("Failed to upload all test suites data to report portal:", error);
+    });
   }
 }
 
@@ -567,6 +621,11 @@ function executionLoop() {
           });
         }
       }
+      
+      // Upload test data to report portal when test case is completed
+      RecorderIntegrationService.onTestExecutionComplete().catch(error => {
+        console.error("Failed to upload test data to report portal:", error);
+      });
     } else {
       caseFailed = false;
     }
@@ -655,10 +714,27 @@ function executionLoop() {
           commandValue +
           " |"
       );
-      commandName = formalCommands[commandName.toLowerCase()];
+      // Check for Robot Framework command mapping first
+      if (robotFrameworkCommandMap[commandName]) {
+        commandName = robotFrameworkCommandMap[commandName];
+      } else if (window.robotFrameworkCommands && window.robotFrameworkCommands[commandName]) {
+        commandName = window.robotFrameworkCommands[commandName];
+      } else {
+        commandName = formalCommands[commandName.toLowerCase()];
+      }
       let upperCase =
         commandName.charAt(0).toUpperCase() + commandName.slice(1);
       commandTarget = convertVariableToString(commandTarget);
+      
+      // Debug logging for Robot Framework command execution
+      console.log("Executing Robot Framework command:", {
+        originalCommand: testCommand.name,
+        mappedCommand: commandName,
+        upperCase: upperCase,
+        methodName: "do" + upperCase,
+        hasMethod: typeof extCommand["do" + upperCase] === "function"
+      });
+      
       return extCommand["do" + upperCase](commandTarget, commandValue)
         .then(function () {
           setColor(currentPlayingCommandIndex + 1, "success");
@@ -967,9 +1043,22 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
   if (commandName.indexOf("${") !== -1) {
     commandName = convertVariableToString(commandName);
   }
-  let formalCommandName = formalCommands[commandName.trim().toLowerCase()];
-  if (formalCommandName) {
-    commandName = formalCommandName;
+  // Check for Robot Framework command mapping first
+  if (robotFrameworkCommandMap[commandName.trim()]) {
+    commandName = robotFrameworkCommandMap[commandName.trim()];
+    console.log("Mapped Robot Framework command:", commandName.trim(), "->", commandName);
+  } else if (window.robotFrameworkCommands && window.robotFrameworkCommands[commandName.trim()]) {
+    commandName = window.robotFrameworkCommands[commandName.trim()];
+    console.log("Mapped via window.robotFrameworkCommands:", commandName.trim(), "->", commandName);
+  } else {
+    // Try to find the command in formalCommands (for backward compatibility)
+    let formalCommandName = formalCommands[commandName.trim().toLowerCase()];
+    if (formalCommandName) {
+      commandName = formalCommandName;
+      console.log("Mapped via formalCommands:", commandName.trim(), "->", commandName);
+    } else {
+      console.log("No mapping found for command:", commandName.trim());
+    }
   }
   //check for user setting of self healing
   enableSelfHealing = await isSelfHealingEnable();

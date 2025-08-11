@@ -52,6 +52,81 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
+    <style>
+      /* Report Portal Status Indicator Styles */
+      #report-portal-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      #report-portal-status.connected {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #4caf50;
+      }
+
+      #report-portal-status.disconnected {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #f44336;
+      }
+
+      #report-portal-status.error {
+        background-color: #fff3e0;
+        color: #ef6c00;
+        border: 1px solid #ff9800;
+      }
+
+      #report-portal-status:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      }
+
+      #report-portal-status img {
+        width: 16px;
+        height: 16px;
+      }
+
+      #report-portal-status-text {
+        white-space: nowrap;
+      }
+
+      /* Pulse animation for connected status */
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.8; }
+        100% { opacity: 1; }
+      }
+
+      /* Login button styles */
+      .login-button {
+        background-color: #276EF1;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .login-button:hover {
+        background-color: #1e5fd9;
+      }
+
+      .login-button:active {
+        background-color: #1747b3;
+      }
+    </style>
+
     <script type="text/javascript" src="../content/trustedPolicy.js"></script>
     <script type="text/javascript" src="js/lib/utils.js"></script>
     <script type="text/javascript" src="../common/jquery-3.2.1.min.js"></script>
@@ -250,6 +325,10 @@
                     Log out
                   </div>
                 </div>
+              </div>
+              <div id="report-portal-status" class="sub_btn" style="display: none" title="Report Portal Connection Status">
+                <img src="icons/report-portal-icon.svg" alt="Report Portal" />
+                <span id="report-portal-status-text">Connected</span>
               </div>
               <div id="slider" style="display: none"></div>
               <div id="slider-container" style="display: none"></div>
@@ -802,6 +881,9 @@
             <option value="new-formatter-puppeteer_json">
               JSON (puppeteer)
             </option>
+            <option value="new-formatter-robotframework">
+              Robot Framework
+            </option>
           </select>
           <div style="display: inline-block">
             You can add your own formatter. Read more
@@ -857,6 +939,86 @@
               automation.
             </p>
           </a>
+        </div>
+      </div>
+
+      <!-- Report Portal Login Dialog -->
+      <div id="reportPortalLoginDialog" style="display: none" title="Sign in to Report Portal">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="icons/report-portal-icon.svg" alt="Report Portal" style="width: 48px; height: 48px; margin-bottom: 10px;" />
+          <h3 style="color: #276EF1; margin: 0;">Connect to Report Portal</h3>
+          <p style="color: #666; margin: 10px 0 0 0;">Sign in to upload test results and view analytics</p>
+        </div>
+        
+        <div id="loginForm">
+          <div style="margin-bottom: 15px;">
+            <label for="rp-email" style="display: block; margin-bottom: 5px; font-weight: 500;">Email</label>
+            <input type="email" id="rp-email" placeholder="Enter your email" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label for="rp-password" style="display: block; margin-bottom: 5px; font-weight: 500;">Password</label>
+            <input type="password" id="rp-password" placeholder="Enter your password" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+          </div>
+          
+          <div id="loginError" style="color: #f44336; margin-bottom: 15px; display: none;"></div>
+          
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button id="rp-signin" style="flex: 1; background-color: #276EF1; color: white; border: none; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;">Sign In</button>
+            <button id="rp-cancel" style="flex: 1; background-color: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 12px; border-radius: 4px; font-size: 14px; cursor: pointer;">Cancel</button>
+          </div>
+          
+          <div style="text-align: center; border-top: 1px solid #eee; padding-top: 15px;">
+            <p style="margin: 0 0 10px 0; color: #666;">Don't have an account?</p>
+            <button id="rp-signup" style="background: none; border: none; color: #276EF1; text-decoration: underline; cursor: pointer; font-size: 14px;">Sign up for Report Portal</button>
+          </div>
+        </div>
+        
+        <div id="loginSuccess" style="display: none; text-align: center;">
+          <div style="color: #4caf50; font-size: 48px; margin-bottom: 15px;">✓</div>
+          <h3 style="color: #4caf50; margin: 0 0 10px 0;">Successfully Connected!</h3>
+          <p style="color: #666; margin: 0;">Your recorder is now connected to Report Portal</p>
+          <button id="rp-continue" style="background-color: #276EF1; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 15px;">Continue</button>
+        </div>
+      </div>
+
+      <!-- Report Portal Login Dialog -->
+      <div id="reportPortalLoginDialog" style="display: none" title="Sign in to Report Portal">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="icons/report-portal-icon.svg" alt="Report Portal" style="width: 48px; height: 48px; margin-bottom: 10px;" />
+          <h3 style="color: #276EF1; margin: 0;">Connect to Report Portal</h3>
+          <p style="color: #666; margin: 10px 0 0 0;">Sign in to upload test results and view analytics</p>
+        </div>
+        
+        <div id="loginForm">
+          <div style="margin-bottom: 15px;">
+            <label for="rp-email" style="display: block; margin-bottom: 5px; font-weight: 500;">Email</label>
+            <input type="email" id="rp-email" placeholder="Enter your email" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label for="rp-password" style="display: block; margin-bottom: 5px; font-weight: 500;">Password</label>
+            <input type="password" id="rp-password" placeholder="Enter your password" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+          </div>
+          
+          <div id="loginError" style="color: #f44336; margin-bottom: 15px; display: none;"></div>
+          
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button id="rp-signin" style="flex: 1; background-color: #276EF1; color: white; border: none; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;">Sign In</button>
+            <button id="rp-cancel" style="flex: 1; background-color: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 12px; border-radius: 4px; font-size: 14px; cursor: pointer;">Cancel</button>
+          </div>
+          
+          <div style="text-align: center; border-top: 1px solid #eee; padding-top: 15px;">
+            <p style="margin: 0 0 10px 0; color: #666;">Don't have an account?</p>
+            <button id="rp-signup" style="background: none; border: none; color: #276EF1; text-decoration: underline; cursor: pointer; font-size: 14px;">Sign up for Report Portal</button>
+          </div>
+        </div>
+        
+        <div id="loginSuccess" style="display: none; text-align: center;">
+          <div style="color: #4caf50; font-size: 48px; margin-bottom: 15px;">✓</div>
+          <h3 style="color: #4caf50; margin: 0 0 10px 0;">Successfully Connected!</h3>
+          <p style="color: #666; margin: 0;">Your recorder is now connected to Report Portal</p>
+          <button id="rp-continue" style="background-color: #276EF1; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 15px;">Continue</button>
         </div>
       </div>
     </section>
@@ -1044,6 +1206,10 @@
       type="module"
       src="js/UI/controllers/top-toolbar/actions.js"
     ></script>
+    <script
+      type="module"
+      src="js/UI/controllers/report-portal/report-portal-login-handler.js"
+    ></script>
     <script src="js/UI/controllers/left-toolbar/resize-actions.js"></script>
 
     <script
@@ -1070,6 +1236,18 @@
     <script
       type="text/javascript"
       src="js/katalon/newformatters/puppeteer.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="js/katalon/newformatters/robotframework.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="js/katalon/robot-framework-commands.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="js/katalon/robot-command-override.js"
     ></script>
 
     <script

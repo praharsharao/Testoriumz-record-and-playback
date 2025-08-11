@@ -59,7 +59,7 @@ class BackgroundRecorder {
             self.currentRecordingTabId[testCaseId] = activeInfo.tabId;
             self.currentRecordingWindowId[testCaseId] = activeInfo.windowId;
             self.currentRecordingFrameLocation[testCaseId] = "root";
-            addCommandAuto("selectWindow", [[self.openedTabIds[testCaseId][activeInfo.tabId]]], "");
+            addCommandAuto("Switch Window", [[self.openedTabIds[testCaseId][activeInfo.tabId]]], "");
         }, 150);
     }
 
@@ -112,7 +112,7 @@ class BackgroundRecorder {
                 self.currentRecordingWindowId[testCaseId] = windowId;
                 self.currentRecordingTabId[testCaseId] = tabs[0].id;
                 self.currentRecordingFrameLocation[testCaseId] = "root";
-                addCommandAuto("selectWindow", [[self.openedTabIds[testCaseId][tabs[0].id]]], "");
+                addCommandAuto("Switch Window", [[self.openedTabIds[testCaseId][tabs[0].id]]], "");
             }
         });
     }
@@ -129,17 +129,17 @@ class BackgroundRecorder {
 
         if (this.openedTabIds[testCaseId][tabId] != undefined) {
             if (this.currentRecordingTabId[testCaseId] !== tabId) {
-                addCommandAuto("selectWindow", [
+                addCommandAuto("Switch Window", [
                     [this.openedTabIds[testCaseId][tabId]]
                 ], "");
-                addCommandAuto("close", [
+                addCommandAuto("Close", [
                     [this.openedTabIds[testCaseId][tabId]]
                 ], "");
-                addCommandAuto("selectWindow", [
+                addCommandAuto("Switch Window", [
                     [this.openedTabIds[testCaseId][this.currentRecordingTabId[testCaseId]]]
                 ], "");
             } else {
-                addCommandAuto("close", [
+                addCommandAuto("Close", [
                     [this.openedTabIds[testCaseId][tabId]]
                 ], "");
             }
@@ -217,14 +217,14 @@ class BackgroundRecorder {
         }
 
         if (getRecordsArray().length === 0) {
-            addCommandAuto("open", [
+            addCommandAuto("Go To", [
                 [sender.tab.url]
             ], "");
             this.openedTabIds[testCaseId]['tabUrl'] = sender.tab.url;
         }
 
         if (this.openedTabIds[testCaseId][sender.tab.id] == undefined) {
-            addCommandAuto("open", [
+            addCommandAuto("Go To", [
                 [sender.tab.url]
             ], "");
             this.currentRecordingTabId[testCaseId] = sender.tab.id;
@@ -239,7 +239,7 @@ class BackgroundRecorder {
                 [`window.open("${sender.tab.url}", "_blank");`]
             ], "");
             //set focus to that tab
-            addCommandAuto("selectWindow", [
+            addCommandAuto("Switch Window", [
                 [`win_ser_${this.openedTabCount[testCaseId]}`]
             ], "");
             this.openedTabNames[testCaseId]["win_ser_" + this.openedTabCount[testCaseId]] = sender.tab.id;
@@ -251,14 +251,14 @@ class BackgroundRecorder {
 
         // if exists record hasn't tabUrl, add command open when fill url
         if (!this.openedTabIds[testCaseId]['tabUrl'] && this.openedTabNames[testCaseId]["win_ser_local"] === sender.tab.id && message.command === 'checkForAutomated') {
-            addCommandAuto("open", [
+            addCommandAuto("Go To", [
                 [sender.tab.url]
             ], "");
             this.openedTabIds[testCaseId]['tabUrl'] = sender.tab.url;
         } else {
             //if new record add tabUrl, add command open
             if (this.openedTabIds[testCaseId]['tabUrl'] && !sender.tab.url.includes(this.openedTabIds[testCaseId]['tabUrl'])) {
-                addCommandAuto("open", [
+                addCommandAuto("Go To", [
                     [sender.tab.url]
                 ], "");
                 this.openedTabIds[testCaseId]['tabUrl'] = sender.tab.url;
@@ -272,23 +272,23 @@ class BackgroundRecorder {
             let newFrameLevels = message.frameLocation.split(':');
             let oldFrameLevels = this.currentRecordingFrameLocation[testCaseId].split(':');
             while (oldFrameLevels.length > newFrameLevels.length) {
-                addCommandAuto("selectFrame", [
-                    ["relative=parent"]
-                ], "");
-                oldFrameLevels.pop();
-            }
-            while (oldFrameLevels.length != 0 && oldFrameLevels[oldFrameLevels.length - 1] != newFrameLevels[oldFrameLevels.length - 1]) {
-                addCommandAuto("selectFrame", [
-                    ["relative=parent"]
-                ], "");
-                oldFrameLevels.pop();
-            }
-            while (oldFrameLevels.length < newFrameLevels.length) {
-                addCommandAuto("selectFrame", [
-                    ["index=" + newFrameLevels[oldFrameLevels.length]]
-                ], "");
-                oldFrameLevels.push(newFrameLevels[oldFrameLevels.length]);
-            }
+                            addCommandAuto("Switch Frame", [
+                ["relative=parent"]
+            ], "");
+            oldFrameLevels.pop();
+        }
+        while (oldFrameLevels.length != 0 && oldFrameLevels[oldFrameLevels.length - 1] != newFrameLevels[oldFrameLevels.length - 1]) {
+            addCommandAuto("Switch Frame", [
+                ["relative=parent"]
+            ], "");
+            oldFrameLevels.pop();
+        }
+        while (oldFrameLevels.length < newFrameLevels.length) {
+            addCommandAuto("Switch Frame", [
+                ["index=" + newFrameLevels[oldFrameLevels.length]]
+            ], "");
+            oldFrameLevels.push(newFrameLevels[oldFrameLevels.length]);
+        }
             this.currentRecordingFrameLocation[testCaseId] = message.frameLocation;
         }
 

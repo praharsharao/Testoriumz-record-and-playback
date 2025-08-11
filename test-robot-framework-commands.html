@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Robot Framework Commands - Testoriumz Recorder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            color: #555;
+            margin-top: 0;
+        }
+        input, select, button, textarea {
+            margin: 10px 5px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .checkbox-group, .radio-group {
+            margin: 15px 0;
+        }
+        .checkbox-group label, .radio-group label {
+            display: block;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Robot Framework Commands</h1>
+        
+        <div class="alert alert-info">
+            <strong>Instructions:</strong> Open Testoriumz Recorder and start recording on this page. 
+            You should now see Robot Framework keywords in the command dropdown instead of Selenium commands!
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Text Input & Forms</h3>
+            <input type="text" id="username" placeholder="Enter username" />
+            <input type="password" id="password" placeholder="Enter password" />
+            <textarea id="comments" placeholder="Enter comments"></textarea>
+            <button id="submit-btn">Submit Form</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔘 Buttons & Links</h3>
+            <button id="click-btn">Click Me</button>
+            <button id="double-click-btn">Double Click Me</button>
+            <a href="#" id="test-link">Test Link</a>
+            <button id="alert-btn">Show Alert</button>
+            <button id="confirm-btn">Show Confirm</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Dropdowns & Lists</h3>
+            <select id="country">
+                <option value="">Select Country</option>
+                <option value="us">United States</option>
+                <option value="uk">United Kingdom</option>
+                <option value="ca">Canada</option>
+                <option value="au">Australia</option>
+            </select>
+            
+            <select id="skills" multiple>
+                <option value="selenium">Selenium</option>
+                <option value="robot">Robot Framework</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+            </select>
+        </div>
+
+        <div class="test-section">
+            <h3>☑️ Checkboxes & Radio Buttons</h3>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="newsletter" /> Subscribe to newsletter</label>
+                <label><input type="checkbox" id="terms" /> Accept terms</label>
+                <label><input type="checkbox" id="marketing" /> Marketing emails</label>
+            </div>
+            
+            <div class="radio-group">
+                <label><input type="radio" name="gender" value="male" /> Male</label>
+                <label><input type="radio" name="gender" value="female" /> Female</label>
+                <label><input type="radio" name="gender" value="other" /> Other</label>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Table Data</h3>
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>City</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>John Doe</td>
+                        <td>30</td>
+                        <td>New York</td>
+                    </tr>
+                    <tr>
+                        <td>Jane Smith</td>
+                        <td>25</td>
+                        <td>London</td>
+                    </tr>
+                    <tr>
+                        <td>Bob Johnson</td>
+                        <td>35</td>
+                        <td>Toronto</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="test-section">
+            <h3>📁 File Upload</h3>
+            <input type="file" id="file-upload" />
+            <button id="upload-btn">Upload File</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🖱️ Mouse & Keyboard Actions</h3>
+            <div id="hover-area" style="width: 200px; height: 100px; background-color: #e9ecef; border: 2px dashed #6c757d; text-align: center; line-height: 100px;">
+                Hover over me
+            </div>
+            <button id="focus-btn">Focus Button</button>
+            <input type="text" id="keyboard-input" placeholder="Type here for keyboard actions" />
+        </div>
+
+        <div class="test-section">
+            <h3>⏱️ Wait & Verification</h3>
+            <button id="show-element-btn">Show Hidden Element</button>
+            <div id="hidden-element" style="display: none; padding: 10px; background-color: #28a745; color: white; margin: 10px 0;">
+                This element was hidden and now is visible!
+            </div>
+            <button id="change-text-btn">Change Text</button>
+            <div id="dynamic-text">Original text</div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Expected Result:</strong> When you record actions on this page, you should see Robot Framework keywords like:
+            <ul>
+                <li><code>Click Element</code> instead of <code>click</code></li>
+                <li><code>Input Text</code> instead of <code>type</code></li>
+                <li><code>Select From List By Label</code> instead of <code>select</code></li>
+                <li><code>Wait Until Element Is Visible</code> instead of <code>waitForElementPresent</code></li>
+                <li><code>Page Should Contain</code> instead of <code>assertText</code></li>
+            </ul>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Troubleshooting:</strong> If you still see Selenium commands:
+            <ol>
+                <li>Refresh the Testoriumz Recorder extension completely</li>
+                <li>Check the browser console for any errors</li>
+                <li>Make sure all the new JavaScript files are loaded</li>
+                <li>Try recording a new test case</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Interactive elements for testing
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            alert('Form submitted!');
+        });
+
+        document.getElementById('click-btn').addEventListener('click', function() {
+            this.textContent = 'Clicked!';
+        });
+
+        document.getElementById('double-click-btn').addEventListener('dblclick', function() {
+            this.textContent = 'Double Clicked!';
+        });
+
+        document.getElementById('alert-btn').addEventListener('click', function() {
+            alert('This is an alert dialog!');
+        });
+
+        document.getElementById('confirm-btn').addEventListener('click', function() {
+            if (confirm('Do you want to continue?')) {
+                alert('You clicked OK!');
+            } else {
+                alert('You clicked Cancel!');
+            }
+        });
+
+        document.getElementById('show-element-btn').addEventListener('click', function() {
+            document.getElementById('hidden-element').style.display = 'block';
+        });
+
+        document.getElementById('change-text-btn').addEventListener('click', function() {
+            document.getElementById('dynamic-text').textContent = 'Text changed at ' + new Date().toLocaleTimeString();
+        });
+
+        document.getElementById('hover-area').addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#007bff';
+            this.style.color = 'white';
+        });
+
+        document.getElementById('hover-area').addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '#e9ecef';
+            this.style.color = 'black';
+        });
+
+        document.getElementById('focus-btn').addEventListener('focus', function() {
+            this.style.backgroundColor = '#28a745';
+        });
+
+        document.getElementById('focus-btn').addEventListener('blur', function() {
+            this.style.backgroundColor = '#007bff';
+        });
+    </script>
+</body>
+</html> 

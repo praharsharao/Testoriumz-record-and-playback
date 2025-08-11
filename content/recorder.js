@@ -101,9 +101,13 @@ class Recorder {
 
     record(command, target, value, insertBeforeLastCommand, actualFrameLocation) {
         let self = this;
+        
+        // Convert Selenium commands to Robot Framework commands automatically
+        let robotCommand = this.convertToRobotFramework(command, target, value);
+        
         if (!target[0].some(e => e?.includes instanceof Function && e.includes('popupInjectionKR'))) {
             browser.runtime.sendMessage({
-                command: command,
+                command: robotCommand,
                 target: target,
                 value: value,
                 insertBeforeLastCommand: insertBeforeLastCommand,
@@ -114,6 +118,123 @@ class Recorder {
                 self.detach();
                 KAT-END */
             });
+        }
+    }
+    
+    // Convert Selenium commands to Robot Framework commands
+    convertToRobotFramework(command, target, value) {
+        switch (command.toLowerCase()) {
+            case 'open':
+                return 'Go To';
+                
+            case 'click':
+                // Check if it's a link click
+                if (target && target[0] && target[0][0] && target[0][0].startsWith('link=')) {
+                    return 'Click Link';
+                }
+                return 'Click Element';
+                
+            case 'type':
+                return 'Input Text';
+                
+            case 'select':
+                return 'Select From List By Label';
+                
+            case 'submit':
+                return 'Submit Form';
+                
+            case 'waitforelementpresent':
+                return 'Wait Until Element Is Visible';
+                
+            case 'waitforelementclickable':
+                return 'Wait Until Element Is Clickable';
+                
+            case 'waitfortext':
+                return 'Wait Until Page Contains';
+                
+            case 'waitforelement':
+                return 'Wait Until Page Contains Element';
+                
+            case 'asserttext':
+                return 'Page Should Contain';
+                
+            case 'assertnottext':
+                return 'Page Should Not Contain';
+                
+            case 'assertelementpresent':
+                return 'Element Should Be Visible';
+                
+            case 'assertelementnotpresent':
+                return 'Element Should Not Be Visible';
+                
+            case 'assertelementenabled':
+                return 'Element Should Be Enabled';
+                
+            case 'assertelementdisabled':
+                return 'Element Should Be Disabled';
+                
+            case 'storetitle':
+                return 'Get Title';
+                
+            case 'storetext':
+                return 'Get Text';
+                
+            case 'storevalue':
+                return 'Get Value';
+                
+            case 'captureentirepagescreenshot':
+                return 'Capture Page Screenshot';
+                
+            case 'pause':
+                return 'Sleep';
+                
+            case 'goback':
+                return 'Go Back';
+                
+            case 'refresh':
+                return 'Reload Page';
+                
+            case 'selectwindow':
+                return 'Switch Window';
+                
+            case 'selectframe':
+                return 'Switch Frame';
+                
+            case 'doubleclick':
+                return 'Double Click Element';
+                
+            case 'mouseover':
+                return 'Mouse Over';
+                
+            case 'draganddroptoobject':
+                return 'Drag And Drop';
+                
+            case 'sendkeys':
+                return 'Press Keys';
+                
+            case 'clear':
+                return 'Clear Element Text';
+                
+            case 'focus':
+                return 'Focus';
+                
+            case 'scrollintoview':
+                return 'Scroll Element Into View';
+                
+            default:
+                // For unknown commands, try to convert them
+                if (command.startsWith('waituntil')) {
+                    return 'Wait Until ' + command.substring(9);
+                } else if (command.startsWith('assert')) {
+                    return 'Element Should ' + command.substring(6);
+                } else if (command.startsWith('verify')) {
+                    return 'Element Should ' + command.substring(6);
+                } else if (command.startsWith('get')) {
+                    return 'Get ' + command.substring(3);
+                }
+                
+                // Return the original command if no conversion found
+                return command;
         }
     }
 }

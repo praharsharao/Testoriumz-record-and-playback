@@ -17,6 +17,48 @@
 
 var selenium = new Selenium(BrowserBot.createForWindow(window));
 
+// Create Robot Framework command mapping
+if (typeof window.robotFrameworkCommands === 'undefined') {
+    window.robotFrameworkCommands = {};
+    
+    // Map Robot Framework commands to Selenium commands
+    window.robotFrameworkCommands['Go To'] = 'open';
+    window.robotFrameworkCommands['Click Element'] = 'click';
+    window.robotFrameworkCommands['Click Link'] = 'click';
+    window.robotFrameworkCommands['Input Text'] = 'type';
+    window.robotFrameworkCommands['Input Password'] = 'type';
+    window.robotFrameworkCommands['Select From List By Label'] = 'select';
+    window.robotFrameworkCommands['Select From List By Value'] = 'select';
+    window.robotFrameworkCommands['Select From List By Index'] = 'select';
+    window.robotFrameworkCommands['Submit Form'] = 'submit';
+    window.robotFrameworkCommands['Wait Until Element Is Visible'] = 'waitForElementPresent';
+    window.robotFrameworkCommands['Wait Until Element Is Clickable'] = 'waitForElementPresent';
+    window.robotFrameworkCommands['Wait Until Page Contains'] = 'waitForText';
+    window.robotFrameworkCommands['Wait Until Page Contains Element'] = 'waitForElementPresent';
+    window.robotFrameworkCommands['Page Should Contain'] = 'assertText';
+    window.robotFrameworkCommands['Page Should Not Contain'] = 'assertNotText';
+    window.robotFrameworkCommands['Element Should Be Visible'] = 'assertElementPresent';
+    window.robotFrameworkCommands['Element Should Not Be Visible'] = 'assertElementNotPresent';
+    window.robotFrameworkCommands['Element Should Be Enabled'] = 'assertElementPresent';
+    window.robotFrameworkCommands['Element Should Be Disabled'] = 'assertElementPresent';
+    window.robotFrameworkCommands['Get Title'] = 'storeTitle';
+    window.robotFrameworkCommands['Get Text'] = 'storeText';
+    window.robotFrameworkCommands['Get Value'] = 'storeValue';
+    window.robotFrameworkCommands['Capture Page Screenshot'] = 'captureEntirePageScreenshot';
+    window.robotFrameworkCommands['Sleep'] = 'pause';
+    window.robotFrameworkCommands['Go Back'] = 'goBack';
+    window.robotFrameworkCommands['Reload Page'] = 'refresh';
+    window.robotFrameworkCommands['Switch Window'] = 'selectWindow';
+    window.robotFrameworkCommands['Switch Frame'] = 'selectFrame';
+    window.robotFrameworkCommands['Double Click Element'] = 'doubleClick';
+    window.robotFrameworkCommands['Mouse Over'] = 'mouseOver';
+    window.robotFrameworkCommands['Drag And Drop'] = 'dragAndDropToObject';
+    window.robotFrameworkCommands['Press Keys'] = 'sendKeys';
+    window.robotFrameworkCommands['Clear Element Text'] = 'clear';
+    window.robotFrameworkCommands['Focus'] = 'focus';
+    window.robotFrameworkCommands['Scroll Element Into View'] = 'scrollIntoView';
+}
+
 // Declare global namespace before Locatorbuilders is instantanialized
 window.neighborXpathsGenerator = window.neighborXpathsGenerator || {};
 
@@ -75,7 +117,13 @@ function doCommands(request, sender, sendResponse, type) {
                 });
             });
         } else {
-            var upperCase = request.commands.charAt(0).toUpperCase() + request.commands.slice(1);
+            // Check for Robot Framework command mapping first
+            var mappedCommand = request.commands;
+            if (window.robotFrameworkCommands && window.robotFrameworkCommands[request.commands]) {
+                mappedCommand = window.robotFrameworkCommands[request.commands];
+            }
+            
+            var upperCase = mappedCommand.charAt(0).toUpperCase() + mappedCommand.slice(1);
             if (selenium["do" + upperCase] != null) {
                 try {
                     document.body.setAttribute("SideeXPlayingFlag", true);

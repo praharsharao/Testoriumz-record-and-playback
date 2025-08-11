@@ -12,6 +12,7 @@ import {
 import AuthService, {
   REDIRECT_URI,
 } from "../../services/auth-service/auth-service.js";
+import ReportPortalUIService from "../../services/report-portal-ui-service/report-portal-ui-service.js";
 
 async function logout() {
   let result = await browser.storage.local.get("segment");
@@ -27,6 +28,9 @@ async function logout() {
 
     $("#login-user").hide();
     $("#login-button").show();
+
+    // Hide report portal status on logout
+    await ReportPortalUIService.hideConnectionStatus();
 
     // logout from keycloak
     AuthService.logout()
@@ -65,6 +69,15 @@ async function setUserAfterLogin(accessToken) {
   await trackingLogin();
   await setHubspotUser(email);
   await trackingHubspotLogin();
+
+  // Connect recorder to report portal after successful login
+  try {
+    await AuthService.connectRecorderToPortal();
+    // Update the report portal status indicator
+    await ReportPortalUIService.updateStatusIndicator();
+  } catch (error) {
+    console.error("Failed to connect recorder to portal:", error);
+  }
 }
 
 $(() => {
@@ -106,10 +119,19 @@ $(() => {
   browser.storage.local.get("segment").then(async (result) => {
     let checkedResult = await browser.storage.local.get("checkLoginData");
 
-    if (result.segment?.user && checkedResult.checkLoginData?.isActived) {
+    if (result.segment?.user && checkedResult.checkLoginData?.hasLoggedIn && checkedResult.checkLoginData?.user) {
       $("#login-user").show();
       $("#login-button").hide();
       $("#logout-info").html(result.segment.user);
+      
+      // Connect recorder to portal on startup if already logged in
+      try {
+        await AuthService.connectRecorderToPortal();
+        // Initialize and show report portal status indicator
+        await ReportPortalUIService.initializeStatusIndicator();
+      } catch (error) {
+        console.error("Failed to connect recorder to portal on startup:", error);
+      }
     }
   });
 
@@ -117,19 +139,23 @@ $(() => {
     if (Object.keys(changes).includes("checkLoginData")) {
       if (
         changes.checkLoginData.newValue.user &&
-        changes.checkLoginData.newValue.isActived
+        changes.checkLoginData.newValue.hasLoggedIn
       ) {
         const user = changes.checkLoginData.newValue.user;
         $("#login-user").show();
         $("#login-button").hide();
         $("#logout-info").html(user);
+        
+        // Update report portal status when login status changes
+        await ReportPortalUIService.updateStatusIndicator();
       }
     }
   });
 
-  $("#login-button").click(async () => {
-    await AuthService.openUniversalLoginUrl();
-  });
+  // Login button click is now handled by ReportPortalLoginHandler
+  // $("#login-button").click(async () => {
+  //   await AuthService.openUniversalLoginUrl();
+  // });
 
   $("#login-user").click(() => {
     $("#logout-dropdown").toggle();
@@ -142,6 +168,15 @@ $(() => {
     logout();
     $("#logout-dropdown").toggle();
   });
+
+  // Add periodic status check for report portal connection
+  setInterval(async () => {
+    try {
+      await ReportPortalUIService.refreshConnectionStatus();
+    } catch (error) {
+      console.error("Failed to refresh connection status:", error);
+    }
+  }, 30000); // Check every 30 seconds
 
   chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
     if (tab.url.startsWith(REDIRECT_URI) && changeInfo.status === "loading") {

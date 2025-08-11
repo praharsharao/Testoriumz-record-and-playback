@@ -1975,6 +1975,93 @@ select.select-script-language option:checked {
   outline: none;
 }
 
+#report-portal-status {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--dialog-bg-header);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--sub-btn-txt-color);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+#report-portal-status:hover {
+  background: var(--dialog-bg-hover-header);
+  color: var(--sub-btn-txt-hover-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#report-portal-status.connected {
+  background: linear-gradient(180deg, #e5ffe5 0%, #d4f5d4 100%);
+  border-color: #79C20D;
+  color: #32510F;
+}
+
+#report-portal-status.connected::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 6px;
+  height: 6px;
+  background: #79C20D;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+#report-portal-status.disconnected {
+  background: linear-gradient(180deg, #ffe5e5 0%, #f5d4d4 100%);
+  border-color: #D20009;
+  color: #7B040F;
+}
+
+#report-portal-status.disconnected::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 6px;
+  height: 6px;
+  background: #D20009;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+#report-portal-status img {
+  margin-right: 6px;
+  max-height: 16px;
+  width: auto;
+}
+
+#report-portal-status-text {
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 12px;
+}
+
+/* Pulse animation for connected status */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(121, 194, 13, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(121, 194, 13, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(121, 194, 13, 0);
+  }
+}
+
+#report-portal-status.connected {
+  animation: pulse 2s infinite;
+}
+
 #refresh-login {
   color: #4d94ff;
   text-decoration: none;
