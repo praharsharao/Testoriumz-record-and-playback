@@ -227,7 +227,7 @@ function displayFinishDialog() {
     <h3>Here are some resource to explore more</h3>
     <div style="margin=10px">
         <div style="width: 50%; float:right;">
-            <a href="https://docs.katalon.com/x/cRtO?utm_source=chrome%20recorder%20pop-up" target="_blank">
+            <a href="https://reporting.linkfields.com/ui/#login" target="_blank">
                 <div>
                     <img style="${center}" src="/katalon/images/SVG/user-manual-icon.svg" width="30" height="30"/>
                 </div>
@@ -238,7 +238,7 @@ function displayFinishDialog() {
             </a>
         </div>
         <div  style="width: 50%; float:left;">
-            <a href="https://forum.katalon.com/c/product-forums/katalon-recorder" target="_blank">
+            <a href="https://reporting.linkfields.com/ui/#login" target="_blank">
                 <div>
                     <img style="${center}" src="/katalon/images/SVG/community-icon.svg" width="30" height="30"/>
                 </div>

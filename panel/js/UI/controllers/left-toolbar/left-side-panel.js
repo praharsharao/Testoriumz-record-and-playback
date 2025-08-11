@@ -25,7 +25,7 @@ function testDataInfoEvent(){
         </div>
       </div>
       <div class="footer">
-        <a href="https://docs.katalon.com/katalon-recorder/docs/data-driven-execution.html#perform-data-driven-testing" target="_blank">More details</a>
+        <a href="https://reporting.linkfields.com/ui/#login" target="_blank">More details</a>
       </div>
     </div>
   `
@@ -102,7 +102,7 @@ function testDynamicTestSuiteInfoEvent(){
         </div>
       </div>
       <div class="footer">
-        <a href="https://docs.katalon.com/katalon-recorder/docs/dynamic-test-suite.html" target="_blank">More details</a>
+        <a href="https://reporting.linkfields.com/ui/#login" target="_blank">More details</a>
       </div>
     </div>
   `
@@ -141,7 +141,7 @@ function extensionScriptInfoEvent(){
         </div>
       </div>
       <div class="footer">
-        <a href="https://docs.katalon.com/katalon-recorder/docs/extension-scripts-aka-user-extensionsjs-for-custom-locator-builders-and-actions.html" target="_blank">More details</a>
+        <a href="https://reporting.linkfields.com/ui/#login" target="_blank">More details</a>
       </div>
     </div>
   `
@@ -182,7 +182,7 @@ function profilesInfoEvent(){
       </div>
     </div>
     <div class="footer">
-      <a href="https://docs.katalon.com/katalon-recorder/docs/global-variables.html" target="_blank">More details</a>
+      <a href="https://reporting.linkfields.com/ui/#login" target="_blank">More details</a>
     </div>
   </div>
 `

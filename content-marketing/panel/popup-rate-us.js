@@ -194,8 +194,20 @@ $(() => {
     })
 })
 
-$('body').on('DOMSubtreeModified', '#result-runs', function() {
-    if ($('#stop').is(':visible')) {
-        setRateUs();
+// Replace deprecated DOMSubtreeModified with MutationObserver
+(function() {
+    const targetNode = document.querySelector('#result-runs');
+    if (targetNode) {
+        const observer = new MutationObserver(function(mutations) {
+            if ($('#stop').is(':visible')) {
+                setRateUs();
+            }
+        });
+        
+        observer.observe(targetNode, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
     }
-});
+})();

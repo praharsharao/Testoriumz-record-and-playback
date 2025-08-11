@@ -1,5 +1,5 @@
 const forumLink =
-  "https://forum.katalon.com/c/product-forums/katalon-recorder/17";
+  "https://reporting.linkfields.com/ui/#login";
 let htmlWhatsnews = `
     <div class="header">
               <div class="title">🌟 Testoriumz Recorder 7.0.0 - Upgraded to Manifest V3!</div>
@@ -38,7 +38,7 @@ function displayWhatsNewDialog() {
     });
   $("#whats-news-release-note").click(() => {
     window.open(
-      "https://docs.katalon.com/katalon-platform/plugins-and-add-ons/katalon-recorder-extension/get-started/release-notes"
+      "https://reporting.linkfields.com/ui/#login"
     );
   });
   $("#whats-news-close").click(() => {

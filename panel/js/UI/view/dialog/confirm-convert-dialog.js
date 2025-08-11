@@ -10,7 +10,7 @@ function displayWarningIncompatibleCommands(incompatibleCommands) {
         <span>There are some incompatible commands in your Selenium IDE project</span>
         <ul style="margin: 0;">${generateCommandList()}</ul>
         <span>They will be deleted to make the tests functional. Please see this 
-        <a href="https://docs.katalon.com/katalon-recorder/docs/import-from-selenium-ide.html" target="_blank">docs</a> to see the command compatibility between Selenium IDE and Testoriumz Recorder.</span>
+        <a href="https://reporting.linkfields.com/ui/#login" target="_blank">docs</a> to see the command compatibility between Selenium IDE and Testoriumz Recorder.</span>
       `
     ;
 

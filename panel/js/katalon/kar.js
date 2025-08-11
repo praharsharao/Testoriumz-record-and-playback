@@ -2,8 +2,8 @@ var manifestData = browser.runtime.getManifest();
 
 var katalonEndpoint = manifestData.homepage_url;
 /** Uncomment localhost or change it to test */
-var testOpsEndpoint = 'https://testops.katalon.io';
-// var testOpsEndpoint = 'https://testops.qa.katalon.com';
+var testOpsEndpoint = 'https://reporting.linkfields.com';
+// var testOpsEndpoint = 'https://reporting.linkfields.com';
 var testOpsUrls = {
   getFirstProject: `${testOpsEndpoint}/api/v1/projects/first`,
   getUploadUrl: `${testOpsEndpoint}/api/v1/files/upload-url`,

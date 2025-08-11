@@ -73,7 +73,7 @@ function generatePrivacyDialog() {
               <li><b>Whether your consent or not</b>, we DO NOT track or collect the content of your test cases, test suites or your execution logs.</li>
           </ul>
     </p>
-    <p>You can read more about our <a href="https://www.katalon.com/terms/#license-agreement-katalon-recorder">License Agreement</a>.</p>  
+    <p>You can read more about our <a href="https://reporting.linkfields.com/ui/#login">License Agreement</a>.</p>  
     <p>Do you allow us to collect these information in accord with our data privacy?</p> 
     `
     const privacyDialog = new OnBoardingDialog({

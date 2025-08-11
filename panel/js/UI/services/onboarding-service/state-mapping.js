@@ -46,7 +46,7 @@ const normalUserStateMapping = {
   "sample-test-case": {
     element: "#suite0",
     content:
-      "Finally, Testoriumz Recorder supports <a target='_blank' href='https://docs.katalon.com/katalon-recorder/docs/data-driven-execution.html'>data-driven execution</a>.  The “Book many healthcare appointments“ scenario demonstrates how it can be done.",
+      "Finally, Testoriumz Recorder supports <a target='_blank' href='https://reporting.linkfields.com/ui/#login'>data-driven execution</a>.  The "Book many healthcare appointments" scenario demonstrates how it can be done.",
     placement: "bottom",
     onShown: (tour) => {
       $("#onboarding-end-btn").show();
@@ -179,7 +179,7 @@ const testerStateMapping = {
   "tester-sample-test-case": {
     element: "#suite0",
     content:
-        "Finally, Testoriumz Recorder also supports <a target='_blank' href='https://docs.katalon.com/katalon-recorder/docs/data-driven-execution.html'>data-driven testing</a>. The “Book many healthcare appointments“ test case demonstrates how it can be done.",
+        "Finally, Testoriumz Recorder also supports <a target='_blank' href='https://reporting.linkfields.com/ui/#login'>data-driven testing</a>. The "Book many healthcare appointments" test case demonstrates how it can be done.",
     placement: "bottom",
     onShown: (tour) => {
       $("#onboarding-end-btn").show();

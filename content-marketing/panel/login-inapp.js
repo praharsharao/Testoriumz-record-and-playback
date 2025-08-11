@@ -241,7 +241,7 @@ async function setUserLogin(rs, isLoggedIn) {
                         $("#error-login1")
                             .css("color", "#ff0000d6")
                             .html(
-                                '<span>This email is not verified yet. Please check your inbox, or go to <a target="_blank" href="https://my.katalon.com/profile">My Account</a> to finish the process.<span>'
+                                '<span>This email is not verified yet. Please check your inbox, or go to <a target="_blank" href="https://reporting.linkfields.com/ui/#login">My Account</a> to finish the process.<span>'
                             );
                     }
                 });
@@ -277,8 +277,8 @@ function togglePassword(toggle) {
 }
 
 function getKatalonAPI() {
-    const endpoint = `https://web-api.katalon.com/wp-json/restful_api/v1/user`;
-    const endpointAPI = "https://api.katalon.com/auth";
+    const endpoint = `https://reporting.linkfields.com/api/users?ids=`;
+    const endpointAPI = "https://reporting.linkfields.com/api/v1/lfi_automation_suite/dashboard?page.page=1&page.size=50&page.sort=creationDate%2CDESC";
     const url = {
         signup: `${endpoint}/create-new-account`,
         signin: `${endpointAPI}/login`,

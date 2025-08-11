@@ -45,7 +45,7 @@ const debounce = function (fn, timeout, c) {
 const configUninstallUrl = debounce(async () => {
   browser.storage.local.get("segment").then(async function (result) {
     const uninstallUrl = new URL(
-      `https://katalon.com/katalon-recorder-ide/tell-us-why`
+              `https://reporting.linkfields.com/ui/#login`
     );
     if (result.segment) {
       let segment = result.segment;

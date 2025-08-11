@@ -167,7 +167,7 @@ function showTestOpsLoginDialog() {
                     </br> 
                     <span>When using with Testoriumz Recorder, Katalon TestOps also helps you backup your entire project to avoid the possibility of data loss.</span>
                     </br> 
-                    <span>You can register a completely free account at <a target="_blank" href="${katalonEndpoint}" class="testops-link">katalon.com</a>.</span>
+                    <span>You can register a completely free account at <a target="_blank" href="${katalonEndpoint}" class="testops-link">testoriumz.com</a>.</span>
                 `;
   showTestOpsDialog(dialogHtml);
 }
@@ -181,7 +181,7 @@ async function renderUploadDialog(projects) {
   }, "");
 
   const html = `<label for="select-ka-project">Select a project to upload your logs. You can create new projects at <a
-                target="_blank" href="https://analytics.katalon.com" class="katalon-link">Katalon
+                target="_blank" href="https://reporting.linkfields.com/ui/#login" class="katalon-link">Testoriumz
             TestOps</a>.</label>
         <select id="select-ka-project" style="width: 100%">${projectOptions}</select>`;
 

@@ -15,22 +15,22 @@ const tutorials = [
   },
   {
     id: "tutorial1",
-    link: "https://docs.katalon.com/katalon-recorder/docs/how-to-extract-and-verify-textual-patterns-in-a-test-case.html",
+    link: "https://reporting.linkfields.com/ui/#login",
     text: "Verify or assert textual patterns on the page"
   },
   {
     id: "tutorial2",
-    link: "https://docs.katalon.com/katalon-recorder/docs/how-to-use-conditional-statements-in-a-test-case.html",
+    link: "https://reporting.linkfields.com/ui/#login",
     text: "Flow controls"
   },
   {
     id: "tutorial3",
-    link: "https://docs.katalon.com/katalon-recorder/docs/write-and-extract-data.html",
+    link: "https://reporting.linkfields.com/ui/#login",
     text: "Extract and write data down to files"
   },
   {
     id: "tutorial4",
-    link: "https://docs.katalon.com/katalon-recorder/docs/implement-data-driven-testing-in-a-test-case.html",
+    link: "https://reporting.linkfields.com/ui/#login",
     text: "Run tests with multiple data sets"
   }
 ];

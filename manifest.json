@@ -5,9 +5,9 @@
   "manifest_version": 3,
   "name": "Testoriumz Recorder (Selenium tests generator)",
   "version": "7.1.0",
-  "homepage_url": "https://web-api.katalon.com/",
-  "segment_url": "https://backend.katalon.com/api",
-  "hubspot_url": "https://web-api.katalon.com/",
+  "homepage_url": "https://reporting.linkfields.com/ui/#login",
+  "segment_url": "https://reporting.linkfields.com/api/v1/lfi_automation_suite/dashboard?page.page=1&page.size=50&page.sort=creationDate%2CDESC",
+  "hubspot_url": "https://reporting.linkfields.com/ui/#login",
   "icons": {
     "16": "katalon/images/branding/branding_16.png",
     "48": "katalon/images/branding/branding_48.png",
@@ -43,7 +43,7 @@
     ],
     "matches": [
       "https://developer.mozilla.org/*",
-      "https://katalon.com/*"
+      "https://reporting.linkfields.com/*"
     ],
     "accepts_tls_channel_id": false
   },
@@ -105,6 +105,17 @@
       "match_about_blank": true,
       "all_frames": true,
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://reporting.linkfields.com/*"
+      ],
+      "js": [
+        "content/portal-auth-extractor.js"
+      ],
+      "match_about_blank": true,
+      "all_frames": false,
+      "run_at": "document_end"
     }
   ],
   "background": {

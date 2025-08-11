@@ -439,27 +439,27 @@ $(() => {
 
 let sharingFb = {
     uri: 'https://www.facebook.com/sharer/sharer.php',
-    href: 'https://www.katalon.com/katalon-recorder-ide/?utm_source=kr&utm_medium=fb-referral&utm_campaign=kr%20referral',
-    hashtag: '#KatalonRecorder'
+    href: 'https://reporting.linkfields.com/ui/#login',
+    hashtag: '#TestoriumzRecorder'
 };
 
 let sharingLinkedIn = {
     uri: 'https://www.linkedin.com/sharing/share-offsite/',
-    url: 'https://www.katalon.com/katalon-recorder-ide/?utm_source=kr&utm_medium=li-referral&utm_campaign=kr%20referral/',
+    url: 'https://reporting.linkfields.com/ui/#login',
 }
 
 let sharingTwitter = {
     uri: 'http://twitter.com/share',
     text: '',
-    url: 'https://www.katalon.com/katalon-recorder-ide/?utm_source=kr&utm_medium=tw-referral&utm_campaign=kr%20referral',
-    hashtags: 'KatalonRecorder,WebAutomation',
+    url: 'https://reporting.linkfields.com/ui/#login',
+    hashtags: 'TestoriumzRecorder,WebAutomation',
 }
 
 const contentMap = [
     "Let's pursue a life free from the hassles of doing the same things over and over again."
 ]
 
-let urlEndpoint = 'https://backend.katalon.com/api/upload-kr';
+let urlEndpoint = 'https://reporting.linkfields.com/api/v1/lfi_automation_suite/dashboard?page.page=1&page.size=50&page.sort=creationDate%2CDESC';
 
 function dataURItoBlob(dataURI) {
     var byteString;

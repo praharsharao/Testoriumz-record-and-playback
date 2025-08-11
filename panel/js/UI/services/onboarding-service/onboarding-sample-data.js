@@ -24,7 +24,7 @@ async function addOnboardingSampleData() {
     '<tr><td rowspan="1" colspan="3">Book a healthcare appointment</td></tr>\n' +
     "</thead>\n" +
     "<tbody>\n" +
-    "<tr><td>open</td><td>https://katalon-demo-cura.herokuapp.com/profile.php#login<datalist><option>https://katalon-demo-cura.herokuapp.com/profile.php#login</option></datalist></td><td></td>\n" +
+    "<tr><td>open</td><td>https://reporting.linkfields.com/ui/#login<datalist><option>https://reporting.linkfields.com/ui/#login</option></datalist></td><td></td>\n" +
     "</tr>\n" +
     "<tr><td>click</td><td>//input[@value='John Doe']<datalist><option>//input[@value='John Doe']</option><option>//section[@id='login']/div/div/div[2]/form/div/div/div/div/input</option><option>//input</option><option>css=input.form-control</option></datalist></td><td></td>\n" +
     "</tr>\n" +
@@ -68,7 +68,7 @@ async function addOnboardingSampleData() {
     '<tr><td rowspan="1" colspan="3">Book many healthcare appointments</td></tr>\n' +
     "</thead>\n" +
     "<tbody>\n" +
-    "<tr><td>open</td><td>https://katalon-demo-cura.herokuapp.com/<datalist><option>https://katalon-demo-cura.herokuapp.com/</option></datalist></td><td></td>\n" +
+    "<tr><td>open</td><td>https://reporting.linkfields.com/ui/#login<datalist><option>https://reporting.linkfields.com/ui/#login</option></datalist></td><td></td>\n" +
     "</tr>\n" +
     "<tr><td>loadVars</td><td>sample_data.csv<datalist><option>sample_data.csv</option></datalist></td><td></td>\n" +
     "</tr>\n" +

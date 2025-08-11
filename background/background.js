@@ -237,3 +237,89 @@ browser.runtime.onConnect.addListener(function (m) {
 const keepAlive = () => setInterval(browser.runtime.getPlatformInfo, 20e3);
 browser.runtime.onStartup.addListener(keepAlive);
 keepAlive();
+
+// Authentication monitoring
+let authCheckInterval;
+
+// Start authentication monitoring
+function startAuthMonitoring() {
+  if (authCheckInterval) {
+    clearInterval(authCheckInterval);
+  }
+  
+  // Check authentication every 10 minutes
+  authCheckInterval = setInterval(async () => {
+    try {
+      const { AuthService } = await import('./panel/js/UI/services/auth-service/auth-service.js');
+      const authStatus = await AuthService.checkAuthenticationStatus();
+      
+      if (!authStatus.isAuthenticated) {
+        console.log("Background: Authentication lost, notifying extension");
+        // Notify the extension that authentication was lost
+        browser.runtime.sendMessage({ type: "auth-lost" });
+      }
+    } catch (error) {
+      console.log("Background auth check error:", error);
+    }
+  }, 600000); // 10 minutes
+}
+
+// Handle messages from content scripts
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type === "check-auth") {
+    try {
+      const { AuthService } = await import('./panel/js/UI/services/auth-service/auth-service.js');
+      const authStatus = await AuthService.checkAuthenticationStatus();
+      sendResponse(authStatus);
+    } catch (error) {
+      console.log("Auth check error:", error);
+      sendResponse({ isAuthenticated: false, user: null });
+    }
+    return true; // Keep the message channel open for async response
+  }
+  
+  if (message.type === "auth-lost") {
+    // Handle authentication loss
+    console.log("Authentication lost, clearing stored data");
+    await browser.storage.local.remove("accessToken");
+    await browser.storage.local.remove("refreshToken");
+    await browser.storage.local.remove("checkLoginData");
+    await browser.storage.local.remove("userInfo");
+  }
+
+  // Handle portal authentication updates
+  if (message.type === "portal-auth-update" || message.type === "portal-login-success") {
+    console.log("Received portal auth update:", message.type);
+    
+    if (message.authData && message.authData.token) {
+      try {
+        const { AuthService } = await import('./panel/js/UI/services/auth-service/auth-service.js');
+        
+        // Store the token
+        await AuthService.storeToken({
+          access_token: message.authData.token,
+          refresh_token: message.authData.token,
+          expires_in: 3600
+        });
+        
+        // Store user info if available
+        if (message.authData.userInfo) {
+          await browser.storage.local.set({ userInfo: message.authData.userInfo });
+        }
+        
+        // Notify the extension about successful authentication
+        browser.runtime.sendMessage({ 
+          type: "portal-auth-success", 
+          user: message.authData.userInfo 
+        });
+        
+        console.log("Portal authentication stored successfully");
+      } catch (error) {
+        console.log("Error storing portal auth:", error);
+      }
+    }
+  }
+});
+
+// Start monitoring when extension loads
+startAuthMonitoring();
