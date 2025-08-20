@@ -60,6 +60,12 @@ function doRecord() {
   let recordButton = document.getElementById("record");
   recorder.attach();
   notificationCount = 0;
+  
+  // Set Robot Framework mode as default for recording
+  if (typeof window !== 'undefined') {
+    window.loadRobotFrameworkCommands = true;
+  }
+  
   // KAT-BEGIN focus on window when recording
   if (contentWindowId) {
     browser.windows.update(contentWindowId, { focused: true });
@@ -75,6 +81,11 @@ function doRecord() {
   recordButton.childNodes[1].textContent = " Stop";
   switchRecordButton(false);
   // KAT-END
+  
+  // Trigger recording started event
+  if (typeof document !== 'undefined') {
+    document.dispatchEvent(new CustomEvent('recordingStarted'));
+  }
 }
 
 export { recordAction }

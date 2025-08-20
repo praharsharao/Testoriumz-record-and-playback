@@ -95,6 +95,18 @@
     },
     {
       "matches": [
+        "<all_urls>"
+      ],
+      "match_about_blank": true,
+      "all_frames": true,
+      "run_at": "document_start",
+      "world": "MAIN",
+      "js": [
+        "content/enhanced-hover-recorder.js"
+      ]
+    },
+    {
+      "matches": [
         "https://www.facebook.com/dialog/share?*",
         "https://twitter.com/intent/tweet?*",
         "https://www.linkedin.com/sharing/share-offsite/?*"
@@ -131,7 +143,10 @@
       "resources": [
         "page/prompt.js",
         "page/runScript.js",
-        "katalon/authenticated.html"
+        "katalon/authenticated.html",
+        "content/dropdown-detector.js",
+        "content/enhanced-dropdown-recorder.js",
+        "content/enhanced-hover-recorder.js"
       ],
       "matches": [
         "<all_urls>"

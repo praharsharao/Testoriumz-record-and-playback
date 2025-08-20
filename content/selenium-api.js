@@ -3396,7 +3396,7 @@ Selenium.prototype.doCaptureEntirePageScreenshot = function (filename, kwargs) {
             // Apparently octal permissions are deprecated, but the suggested alternative is broken in Firefox (and not backwards-compatible from FF 4.0): https://bugzilla.mozilla.org/show_bug.cgi?id=433295
             fileOutputStream.init(nsFile,
                 writeFlag | createFlag | truncateFlag,
-                0664,
+                0o664,
                 null);
             return fileOutputStream;
         },
@@ -3667,7 +3667,7 @@ OptionLocatorFactory.prototype.fromLocatorString = function (locatorString) {
     var locatorType = 'label';
     var locatorValue = locatorString;
     // If there is a locator prefix, use the specified strategy
-    var result = locatorString.match(/^([a-zA-Z]+)=(.*)/);
+    var result = locatorString.match(/^([a-zA-Z-]+)=(.*)/);
     if (result) {
         locatorType = result[1];
         locatorValue = result[2];
@@ -3693,6 +3693,10 @@ OptionLocatorFactory.prototype.registerOptionLocators = function () {
         var result = /OptionLocatorBy([A-Z].+)$/.exec(functionName);
         if (result != null) {
             var locatorName = lcfirst(result[1]);
+            // Handle special case for "mostly-equals"
+            if (locatorName === 'mostlyequals') {
+                locatorName = 'mostly-equals';
+            }
             this.optionLocators[locatorName] = this[functionName];
         }
     }
@@ -3779,6 +3783,44 @@ OptionLocatorFactory.prototype.OptionLocatorById = function (id) {
     this.assertSelected = function (element) {
         var selectedId = element.options[element.selectedIndex].id;
         Assert.matches(this.id, selectedId)
+    };
+};
+
+/**
+ *  OptionLocator for options identified by their labels with mostly-equals matching.
+ *  This handles non-breaking spaces and normalizes whitespace.
+ */
+OptionLocatorFactory.prototype.OptionLocatorByMostlyEquals = function (label) {
+    this.label = label;
+    const nbsp = String.fromCharCode(160);
+    
+    this.findOption = function (element) {
+        for (var i = 0; i < element.options.length; i++) {
+            var optionText = element.options[i].text;
+            // Normalize whitespace and replace nbsp with regular spaces
+            var normalizedText = optionText
+                .replace(/\s+/g, ' ')
+                .replace(new RegExp(nbsp, 'g'), ' ')
+                .trim();
+            
+            if (normalizedText === this.label) {
+                return element.options[i];
+            }
+        }
+        throw new SeleniumError("Option with label '" + this.label + "' not found");
+    };
+
+    this.assertSelected = function (element) {
+        var selectedText = element.options[element.selectedIndex].text;
+        const nbsp = String.fromCharCode(160);
+        var normalizedSelectedText = selectedText
+            .replace(/\s+/g, ' ')
+            .replace(new RegExp(nbsp, 'g'), ' ')
+            .trim();
+        
+        if (normalizedSelectedText !== this.label) {
+            throw new SeleniumError("Expected text (" + this.label + ") did not match: " + normalizedSelectedText);
+        }
     };
 };
 

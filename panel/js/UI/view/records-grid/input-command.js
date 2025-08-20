@@ -79,7 +79,7 @@ function removeInputCommand() {
 }
 
 function inputCommand(node) {
-    const supportedCommand = _loadSeleniumCommands();
+    const supportedCommand = window.loadRobotFrameworkCommands ? _loadRobotFrameworkCommands() : _loadSeleniumCommands();
 
     removeInputCommand();
 

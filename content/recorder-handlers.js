@@ -53,9 +53,21 @@ Recorder.addEventHandler('type', 'change', function (event) {
         // END
         var tagName = eventTarget.tagName.toLowerCase();
         var type = eventTarget.type;
-        if ('input' == tagName && Recorder.inputTypes.indexOf(type) >= 0) {
+        
+        // Special handling for select elements (dropdowns)
+        if ('select' == tagName) {
+            // Let the enhanced dropdown recorder handle select changes
+            // This ensures proper dropdown selection commands are recorded
+            console.log('Select change in type handler - letting enhanced recorder handle it');
+            return;
+        } else if ('input' == tagName && Recorder.inputTypes.indexOf(type) >= 0) {
             if (eventTarget.value.length > 0) {
-                this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                // Use Robot Framework command if enabled
+                if (window.loadRobotFrameworkCommands) {
+                    this.record("Input Text", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                } else {
+                    this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                }
 
                 // © Chen-Chieh Ping, SideeX Team
                 if (enterTarget != null) {
@@ -70,10 +82,18 @@ Recorder.addEventHandler('type', 'change', function (event) {
                 }
                 // END
             } else {
-                this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                if (window.loadRobotFrameworkCommands) {
+                    this.record("Input Text", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                } else {
+                    this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+                }
             }
         } else if ('textarea' == tagName) {
-            this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+            if (window.loadRobotFrameworkCommands) {
+                this.record("Input Text", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+            } else {
+                this.record("type", this.locatorBuilders.buildAll(eventTarget), eventTarget.value);
+            }
         }
     }
     typeLock = 0;
@@ -100,7 +120,22 @@ Recorder.addEventHandler('clickAt', 'click', function (event) {
             } while (element);
             var target = eventTarget;
             if (eventTarget.parentNode.id !== "popupInjectionKR") {
-                this.record("click", this.locatorBuilders.buildAll(eventTarget), '');
+                // Check if this is a dropdown-related click
+                const isDropdownClick = this.isDropdownRelatedClick(eventTarget, event);
+                
+                // For dropdown clicks, let the enhanced dropdown recorder handle it
+                if (isDropdownClick) {
+                    // Don't record the click here - let the enhanced dropdown recorder handle it
+                    // This prevents duplicate recording of dropdown interactions
+                    console.log('Dropdown click detected - letting enhanced recorder handle it');
+                } else {
+                    // Use Robot Framework command if enabled
+                    if (window.loadRobotFrameworkCommands) {
+                        this.record("Click Element", this.locatorBuilders.buildAll(eventTarget), '');
+                    } else {
+                        this.record("click", this.locatorBuilders.buildAll(eventTarget), '');
+                    }
+                }
                 var arrayTest = this.locatorBuilders.buildAll(eventTarget);
                 preventClickTwice = true;
             }
@@ -565,6 +600,66 @@ Recorder.prototype.findClickableElement = function (e) {
     }
 };
 
+// Helper method to detect dropdown-related clicks
+Recorder.prototype.isDropdownRelatedClick = function (element, event) {
+    if (!element) return false;
+    
+    const tagName = element.tagName.toLowerCase();
+    const role = element.getAttribute('role');
+    const className = element.className || '';
+    const id = element.id || '';
+    
+    // Check if element is a dropdown or dropdown-related
+    const isDropdown = (
+        tagName === 'select' ||
+        role === 'listbox' ||
+        role === 'combobox' ||
+        role === 'option' ||
+        className.includes('dropdown') ||
+        className.includes('select') ||
+        className.includes('combobox') ||
+        className.includes('option') ||
+        className.includes('item') ||
+        className.includes('choice') ||
+        id.includes('dropdown') ||
+        id.includes('select') ||
+        element.hasAttribute('data-dropdown') ||
+        element.hasAttribute('data-select') ||
+        element.hasAttribute('data-option') ||
+        element.hasAttribute('data-value')
+    );
+    
+    // Check if parent is a dropdown
+    const parentDropdown = this.findParentDropdown(element);
+    
+    return isDropdown || parentDropdown !== null;
+};
+
+// Helper method to find parent dropdown
+Recorder.prototype.findParentDropdown = function (element) {
+    let parent = element.parentElement;
+    while (parent && parent !== document.body) {
+        const tagName = parent.tagName.toLowerCase();
+        const role = parent.getAttribute('role');
+        const className = parent.className || '';
+        
+        if (
+            tagName === 'select' ||
+            role === 'listbox' ||
+            role === 'combobox' ||
+            className.includes('dropdown') ||
+            className.includes('select') ||
+            className.includes('combobox') ||
+            parent.hasAttribute('data-dropdown') ||
+            parent.hasAttribute('data-select')
+        ) {
+            return parent;
+        }
+        parent = parent.parentElement;
+    }
+    return null;
+};
+
 //select / addSelect / removeSelect
 Recorder.addEventHandler('select', 'focus', function (event) {
     const eventTarget = getEventTarget(event);
@@ -587,24 +682,10 @@ Recorder.addEventHandler('select', 'change', function (event) {
     if (eventTarget.tagName) {
         var tagName = eventTarget.tagName.toLowerCase();
         if ('select' == tagName) {
-            if (!eventTarget.multiple) {
-                var option = eventTarget.options[eventTarget.selectedIndex];
-                this.record("select", this.locatorBuilders.buildAll(eventTarget), this.getOptionLocator(option));
-            } else {
-                var options = eventTarget.options;
-                for (var i = 0; i < options.length; i++) {
-                    if (options[i]._wasSelected == null) { }
-                    if (options[i]._wasSelected != options[i].selected) {
-                        var value = this.getOptionLocator(options[i]);
-                        if (options[i].selected) {
-                            this.record("addSelection", this.locatorBuilders.buildAll(eventTarget), value);
-                        } else {
-                            this.record("removeSelection", this.locatorBuilders.buildAll(eventTarget), value);
-                        }
-                        options[i]._wasSelected = options[i].selected;
-                    }
-                }
-            }
+            // Let the enhanced dropdown recorder handle select changes
+            // This prevents duplicate recording and ensures proper dropdown selection commands
+            console.log('Select change detected - letting enhanced recorder handle it');
+            return;
         }
     }
 });

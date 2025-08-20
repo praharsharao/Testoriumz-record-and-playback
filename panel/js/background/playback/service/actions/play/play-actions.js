@@ -114,6 +114,12 @@ async function initBeforePlay() {
 
   // KAT-END
   declaredVars = {};
+  
+  // Set Robot Framework mode as default for playback
+  if (typeof window !== 'undefined') {
+    window.loadRobotFrameworkCommands = true;
+  }
+  
   window.defaultProfile = await getDefaultProfile();
   for (const variable of defaultProfile.variables) {
     declaredVars[`GlobalVariable.${variable.name}`] = variable.value;
@@ -627,7 +633,13 @@ function executionLoop() {
 
   setColor(currentPlayingCommandIndex + 1, "executing");
 
-  return delay($("#slider").slider("option", "value")).then(function () {
+  // Execute ALL mouse actions immediately with zero delay
+  const isMouseAction = commandName.toLowerCase().includes('click') || 
+                       commandName.toLowerCase().includes('mouse') || 
+                       commandName.toLowerCase().includes('hover') ||
+                       commandName.toLowerCase().includes('drag');
+  const delayTime = isMouseAction ? 0 : $("#slider").slider("option", "value");
+  return delay(delayTime).then(function () {
     if (!blockStack) {
       blockStack = [];
     }
@@ -656,6 +668,15 @@ function executionLoop() {
           " |"
       );
       commandName = formalCommands[commandName.toLowerCase()];
+      
+      // Convert Robot Framework commands back to Selenium IDE commands for execution
+      if (window.loadRobotFrameworkCommands && typeof convertToSeleniumCommand === 'function') {
+        const converted = convertToSeleniumCommand(commandName, commandTarget, commandValue);
+        commandName = converted.command;
+        commandTarget = converted.target;
+        commandValue = converted.value;
+      }
+      
       let upperCase =
         commandName.charAt(0).toUpperCase() + commandName.slice(1);
       commandTarget = convertVariableToString(commandTarget);
@@ -886,8 +907,8 @@ function doAjaxWait() {
     return Promise.reject("shutdown");
   }
   return extCommand.sendCommand("ajaxWait", "", "").then(function (response) {
-    if (ajaxTime && Date.now() - ajaxTime > 30000) {
-      sideex_log.error("Ajax Wait timed out after 30000ms");
+    if (ajaxTime && Date.now() - ajaxTime > 15000) { // Reduced from 30000ms to 15000ms
+      sideex_log.error("Ajax Wait timed out after 15000ms");
       ajaxCount = 0;
       ajaxTime = "";
       return true;
@@ -917,7 +938,7 @@ function doDomWait() {
       domCount = 0;
       domTime = "";
       return true;
-    } else if (response && Date.now() - response.dom_time < 400) {
+    } else if (response && Date.now() - response.dom_time < 200) { // Reduced from 400ms to 200ms for faster execution
       domCount++;
       if (domCount === 1) {
         domTime = Date.now();
@@ -970,6 +991,14 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
   let formalCommandName = formalCommands[commandName.trim().toLowerCase()];
   if (formalCommandName) {
     commandName = formalCommandName;
+  }
+  
+  // Convert Robot Framework commands back to Selenium IDE commands for execution
+  if (window.loadRobotFrameworkCommands && typeof convertToSeleniumCommand === 'function') {
+    const converted = convertToSeleniumCommand(commandName, commandTarget, commandValue);
+    commandName = converted.command;
+    commandTarget = converted.target;
+    commandValue = converted.value;
   }
   //check for user setting of self healing
   enableSelfHealing = await isSelfHealingEnable();
@@ -1311,7 +1340,9 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
           true
         );
       }
-      return extCommand.sendCommand(commandName, commandTarget, commandValue);
+      
+      // Use enhanced element interaction for better reliability
+      return executeElementInteraction(commandName, commandTarget, commandValue);
     })
     .then(async function (result) {
       if (result.result !== "success") {
@@ -1324,13 +1355,29 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
         ) {
           let isCommandExcludedResult = await isCommandExcluded(commandName);
           if (enableSelfHealing && !isCommandExcludedResult) {
-            if (implicitTime && Date.now() - implicitTime > 1000) {
+            if (implicitTime && Date.now() - implicitTime > 5000) {
               implicitCount = 0;
               implicitTime = "";
+              
+              // Try enhanced element finding with fallback strategies
+              const alternativeLocator = await findElementWithFallback(commandTarget, commandValue);
+              if (alternativeLocator) {
+                sideex_log.info(
+                  `Cannot find element ${commandTarget} after 5000ms, trying enhanced fallback: ${alternativeLocator}`
+                );
+                return runCommand(
+                  commands,
+                  commandName,
+                  alternativeLocator,
+                  commandValue
+                );
+              }
+              
+              // Fall back to original possible targets if enhanced strategy fails
               if (possibleTargets.length > 0) {
                 let nextTarget = possibleTargets.shift();
                 sideex_log.info(
-                  `Cannot find element ${commandTarget} after 1000ms switch to ${nextTarget}`
+                  `Enhanced fallback failed, trying original alternative: ${nextTarget}`
                 );
                 return runCommand(
                   commands,
@@ -1339,7 +1386,8 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
                   commandValue
                 );
               }
-              sideex_log.error("Cannot find element");
+              
+              sideex_log.error("Cannot find element with any strategy");
             } else {
               //rerun the test step
               implicitCount++;
@@ -1355,8 +1403,8 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
               );
             }
           } else {
-            if (implicitTime && Date.now() - implicitTime > 10000) {
-              sideex_log.error("Implicit Wait timed out after 10000ms");
+            if (implicitTime && Date.now() - implicitTime > 15000) {
+              sideex_log.error("Implicit Wait timed out after 15000ms");
               implicitCount = 0;
               implicitTime = "";
             } else {
@@ -1549,6 +1597,335 @@ async function executionDialog() {
   /*** By default, if no configuration exists, pause execution
    * Else, follow configuration */
   return testExecution.continueExecution ?? true;
+}
+
+// Helper function to add explicit wait before element interactions
+async function waitForElementReadiness(commandName, commandTarget, commandValue) {
+  // Add explicit wait for element interactions that commonly fail
+  const elementCommands = ['click', 'clickElement', 'doubleClick', 'mouseOver', 'mouseover'];
+  const isElementCommand = elementCommands.some(cmd => commandName.toLowerCase().includes(cmd));
+  
+  if (isElementCommand && commandTarget) {
+    // Wait for element to be present and visible with enhanced strategies
+    try {
+      sideex_log.info(`Enhanced element readiness check for: ${commandTarget}`);
+      
+      const foundLocator = await waitForElementWithMultipleStrategies(commandTarget, commandValue, 3000);
+      
+      if (foundLocator && foundLocator !== commandTarget) {
+        sideex_log.info(`Element found with alternative locator: ${foundLocator}`);
+        // Update the command target for this execution
+        return foundLocator;
+      } else if (foundLocator) {
+        sideex_log.info(`Element found with original locator: ${commandTarget}`);
+      } else {
+        sideex_log.warn(`Element not found during readiness check: ${commandTarget}`);
+      }
+    } catch (error) {
+      // Continue execution even if wait fails
+      console.warn("Enhanced element readiness check failed:", error);
+    }
+  }
+  
+  return commandTarget; // Return original target if no alternative found
+}
+
+// Enhanced element finding with intelligent fallback strategies
+async function findElementWithFallback(commandTarget, commandValue) {
+  const fallbackStrategies = [
+    // Strategy 1: Try the original locator
+    () => commandTarget,
+    
+    // Strategy 2: Try CSS selector if it's an XPath
+    () => {
+      if (commandTarget.startsWith('/') || commandTarget.startsWith('xpath=')) {
+        // Convert XPath to CSS if possible
+        return convertXPathToCSS(commandTarget);
+      }
+      return null;
+    },
+    
+    // Strategy 3: Try by text content if available
+    () => {
+      if (commandValue && commandValue.includes('Text:')) {
+        const textMatch = commandValue.match(/Text:\s*"([^"]+)"/);
+        if (textMatch) {
+          return `xpath=//*[contains(text(),"${textMatch[1]}")]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 4: Try by partial text match
+    () => {
+      if (commandValue && commandValue.includes('Text:')) {
+        const textMatch = commandValue.match(/Text:\s*"([^"]+)"/);
+        if (textMatch) {
+          const partialText = textMatch[1].split(' ')[0]; // Use first word
+          return `xpath=//*[contains(text(),"${partialText}")]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 5: Try by tag name and attributes
+    () => {
+      if (commandValue && commandValue.includes('Tag:')) {
+        const tagMatch = commandValue.match(/Tag:\s*([A-Z]+)/);
+        if (tagMatch) {
+          const tag = tagMatch[1].toLowerCase();
+          return `css=${tag}`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 6: Try by class name if available
+    () => {
+      if (commandValue && commandValue.includes('class.')) {
+        const classMatch = commandValue.match(/class\.([^\s]+)/);
+        if (classMatch) {
+          return `css=.${classMatch[1]}`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 7: Try by role or aria-label if available
+    () => {
+      if (commandValue && (commandValue.includes('role=') || commandValue.includes('aria-label='))) {
+        const roleMatch = commandValue.match(/role=['"]([^'"]+)['"]/);
+        if (roleMatch) {
+          return `css=[role="${roleMatch[1]}"]`;
+        }
+        const ariaMatch = commandValue.match(/aria-label=['"]([^'"]+)['"]/);
+        if (ariaMatch) {
+          return `css=[aria-label="${ariaMatch[1]}"]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 8: Try by data attributes
+    () => {
+      if (commandValue && commandValue.includes('data-')) {
+        const dataMatch = commandValue.match(/data-([^=]+)=['"]([^'"]+)['"]/);
+        if (dataMatch) {
+          return `css=[data-${dataMatch[1]}="${dataMatch[2]}"]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 9: Special handling for dropdown/select elements
+    () => {
+      if (commandValue && (commandValue.includes('-- Select --') || commandValue.includes('select'))) {
+        // Try to find select elements or dropdown containers
+        return `css=select, .oxd-select-text, [role="combobox"], .select-text`;
+      }
+      return null;
+    },
+    
+    // Strategy 10: Try by placeholder text
+    () => {
+      if (commandValue && commandValue.includes('placeholder=')) {
+        const placeholderMatch = commandValue.match(/placeholder=['"]([^'"]+)['"]/);
+        if (placeholderMatch) {
+          return `css=[placeholder="${placeholderMatch[1]}"]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 11: Try by name attribute
+    () => {
+      if (commandValue && commandValue.includes('name=')) {
+        const nameMatch = commandValue.match(/name=['"]([^'"]+)['"]/);
+        if (nameMatch) {
+          return `css=[name="${nameMatch[1]}"]`;
+        }
+      }
+      return null;
+    },
+    
+    // Strategy 12: Try by form field patterns (for OrangeHRM specifically)
+    () => {
+      if (commandValue && commandValue.includes('oxd-')) {
+        // OrangeHRM specific selectors
+        return `css=.oxd-select-text, .oxd-select-text-input, .oxd-select-text--focus`;
+      }
+      return null;
+    }
+  ];
+
+  for (const strategy of fallbackStrategies) {
+    try {
+      const alternativeLocator = strategy();
+      if (alternativeLocator && alternativeLocator !== commandTarget) {
+        sideex_log.info(`Trying alternative locator: ${alternativeLocator}`);
+        
+        // Test if this locator works
+        const result = await extCommand.sendCommand("isElementPresent", alternativeLocator, "");
+        if (result.result === "success" || result.result === "true") {
+          sideex_log.info(`Alternative locator found: ${alternativeLocator}`);
+          return alternativeLocator;
+        }
+      }
+    } catch (error) {
+      // Continue to next strategy
+      continue;
+    }
+  }
+  
+  return null;
+}
+
+// Enhanced element waiting with multiple strategies
+async function waitForElementWithMultipleStrategies(commandTarget, commandValue, maxWaitTime = 10000) {
+  const startTime = Date.now();
+  
+  // Check if this is a mouse action for special handling
+  const isMouseAction = commandTarget.toLowerCase().includes('click') || 
+                        commandTarget.toLowerCase().includes('mouse') || 
+                        commandTarget.toLowerCase().includes('hover') ||
+                        commandTarget.toLowerCase().includes('drag');
+  
+  // For mouse actions, try just once with minimal waiting
+  if (isMouseAction && maxWaitTime <= 100) {
+    // Try the original locator first
+    try {
+      const result = await extCommand.sendCommand("isElementPresent", commandTarget, "");
+      if (result.result === "success" || result.result === "true") {
+        return commandTarget;
+      }
+    } catch (error) {
+      // Continue to fallback
+    }
+    
+    // Try alternative locators once
+    const alternativeLocator = await findElementWithFallback(commandTarget, commandValue);
+    if (alternativeLocator) {
+      return alternativeLocator;
+    }
+    
+    return null;
+  }
+  
+  // Normal flow for non-mouse actions or if immediate execution failed
+  while (Date.now() - startTime < maxWaitTime) {
+    // Try the original locator first
+    try {
+      const result = await extCommand.sendCommand("isElementPresent", commandTarget, "");
+      if (result.result === "success" || result.result === "true") {
+        return commandTarget;
+      }
+    } catch (error) {
+      // Continue to next strategy
+    }
+    
+    // Try alternative locators
+    const alternativeLocator = await findElementWithFallback(commandTarget, commandValue);
+    if (alternativeLocator) {
+      return alternativeLocator;
+    }
+    
+    // Wait minimal time before trying again (50ms for mouse actions, 300ms for other commands)
+    const waitTime = isMouseAction ? 50 : 300;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  return null;
+}
+
+// Function to ensure page is ready for interaction
+async function ensurePageReady() {
+  try {
+    // Minimal wait for DOM to be stable (200ms instead of 1000ms)
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Check if page is still loading
+    const pageStatus = extCommand.getPageStatus();
+    if (!pageStatus) {
+      sideex_log.info("Waiting for page to finish loading...");
+      // Shorter wait time (1000ms instead of 2000ms)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Wait for any AJAX requests to complete
+    await doAjaxWait();
+    
+    // Wait for DOM changes to settle
+    await doDomWait();
+    
+  } catch (error) {
+    sideex_log.warn("Page readiness check failed:", error);
+  }
+}
+
+// Enhanced element interaction with page state management
+async function executeElementInteraction(commandName, commandTarget, commandValue) {
+  // Check if this is a mouse action
+  const isMouseAction = commandName.toLowerCase().includes('click') || 
+                        commandName.toLowerCase().includes('mouse') || 
+                        commandName.toLowerCase().includes('hover') ||
+                        commandName.toLowerCase().includes('drag');
+  
+  // For mouse actions, skip page readiness check to execute immediately
+  if (!isMouseAction) {
+    await ensurePageReady();
+  }
+  
+  // For mouse actions, use minimal timeout (100ms) or bypass waiting completely
+  const timeout = isMouseAction ? 100 : 2000;
+  
+  // For mouse actions, try to execute immediately if possible
+  if (isMouseAction) {
+    try {
+      // Try direct execution first
+      const result = await extCommand.sendCommand("isElementPresent", commandTarget, "");
+      if (result.result === "success" || result.result === "true") {
+        sideex_log.info(`Executing ${commandName} immediately with locator: ${commandTarget}`);
+        return extCommand.sendCommand(commandName, commandTarget, commandValue);
+      }
+    } catch (error) {
+      // If direct execution fails, continue with normal flow
+    }
+  }
+  
+  // Try to find the element with enhanced strategies
+  const foundLocator = await waitForElementWithMultipleStrategies(commandTarget, commandValue, timeout);
+  
+  if (foundLocator) {
+    sideex_log.info(`Executing ${commandName} with locator: ${foundLocator}`);
+    return extCommand.sendCommand(commandName, foundLocator, commandValue);
+  } else {
+    // If element still not found, try the original command
+    sideex_log.warn(`Element not found, trying original command: ${commandTarget}`);
+    return extCommand.sendCommand(commandName, commandTarget, commandValue);
+  }
+}
+
+// Helper function to convert XPath to CSS (basic conversion)
+function convertXPathToCSS(xpath) {
+  try {
+    // Remove xpath= prefix if present
+    let path = xpath.replace(/^xpath=/, '');
+    
+    // Basic XPath to CSS conversion
+    if (path.startsWith('//')) {
+      path = path.substring(2);
+    }
+    
+    // Convert common XPath patterns to CSS
+    path = path.replace(/\/\//g, ' '); // // to space
+    path = path.replace(/\[@id=['"]([^'"]+)['"]\]/g, '#$1'); // [@id='...'] to #id
+    path = path.replace(/\[@class=['"]([^'"]+)['"]\]/g, '.$1'); // [@class='...'] to .class
+    path = path.replace(/\[contains\(@class,\s*['"]([^'"]+)['"]\)\]/g, '.$1'); // contains(@class,'...') to .class
+    
+    return `css=${path}`;
+  } catch (error) {
+    return null;
+  }
 }
 
 export {

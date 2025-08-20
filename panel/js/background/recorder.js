@@ -173,8 +173,15 @@ class BackgroundRecorder {
     };
 
     addCommandMessageHandler(message, sender, sendRequest) {
-        if (!message.command || this.openedWindowIds[sender.tab.windowId] == undefined)
+        console.log('🎯 addCommandMessageHandler received message:', message);
+        console.log('📤 Sender:', sender);
+        
+        if (!message.command || this.openedWindowIds[sender.tab.windowId] == undefined) {
+            console.log('❌ Message rejected - no command or window not opened');
             return;
+        }
+        
+        console.log('✅ Message accepted for processing');
       
         const selectedTestSuite = getSelectedSuite();
         const selectedTestCase = getSelectedCase();
@@ -332,6 +339,101 @@ class BackgroundRecorder {
                     }, 100);
                 })
             return;
+        } else if (message.command === 'Click Element') {
+            // Handle Click Element commands (including hover-triggered ones)
+            console.log('🎯 Background recorder received Click Element command:', message);
+            console.log('🎯 Command:', message.command);
+            console.log('🎯 Target:', message.target);
+            console.log('🎯 Value:', message.value);
+            
+            // Extract enhanced settings if present
+            const enhancedSettings = {
+                includeValidations: message.includeValidations || false,
+                includeScreenshots: message.includeScreenshots || false,
+                includeLogging: message.includeLogging || false,
+                includeIfElse: message.includeIfElse || false
+            };
+            
+            // Process as regular Click Element command, but preserve enhanced settings
+            notification(message.command, message.target, message.value);
+            
+            // Create command with enhanced settings
+            const commandObj = addCommandAuto(message.command, message.target, message.value);
+            if (commandObj) {
+                commandObj.includeValidations = enhancedSettings.includeValidations;
+                commandObj.includeScreenshots = enhancedSettings.includeScreenshots;
+                commandObj.includeLogging = enhancedSettings.includeLogging;
+                commandObj.includeIfElse = enhancedSettings.includeIfElse;
+            }
+            
+            return { success: true, message: 'Click Element command processed' };
+        } else if (message.command === 'hover' || message.command === 'mouseOver') {
+            // Handle regular hover commands with enhanced information
+            console.log('🎯 Background recorder received HOVER command:', message);
+            console.log('🎯 Command type:', message.command);
+            console.log('🎯 Is hover action flag:', message.isHoverAction);
+            console.log('🎯 Enhanced XPath available:', !!message.enhancedXPath);
+            console.log('🎯 Basic XPath:', message.basicXPath);
+            console.log('🎯 Enhanced XPath:', message.enhancedXPath);
+            
+            let hoverValue = message.value || '';
+            if (message.duration) {
+                hoverValue += ` (Duration: ${message.duration}ms)`;
+            }
+            if (message.elementInfo) {
+                hoverValue += ` | ${message.elementInfo}`;
+            }
+            
+            // Add additional element information if available
+            if (message.elementTag) {
+                hoverValue += ` | Tag: ${message.elementTag}`;
+            }
+            if (message.elementText) {
+                hoverValue += ` | Text: "${message.elementText}"`;
+            }
+            if (message.elementId) {
+                hoverValue += ` | ID: ${message.elementId}`;
+            }
+            
+            // Add enhanced XPath information to the value
+            if (message.enhancedXPath && message.enhancedXPath !== message.basicXPath) {
+                hoverValue += ` | Enhanced XPath: ${message.enhancedXPath}`;
+            }
+            
+            console.log('📝 Processed hover value:', hoverValue);
+            console.log('🎯 Hover target:', message.target);
+            
+            // Handle target format - could be string or array of arrays
+            let targetArray;
+            if (Array.isArray(message.target) && Array.isArray(message.target[0])) {
+                // Already in correct format [[xpath]]
+                targetArray = message.target;
+            } else if (Array.isArray(message.target)) {
+                // Single array [xpath] - convert to [[xpath]]
+                targetArray = [message.target];
+            } else {
+                // String xpath - convert to [[xpath]]
+                targetArray = [[message.target]];
+            }
+            
+            console.log('🎯 Final target array:', targetArray);
+            console.log('🎯 Command to be added:', message.command);
+            
+            // Ensure we're adding a hover command, not a click command
+            const commandToAdd = 'hover'; // Always use hover command
+            
+            if (message.insertBeforeLastCommand) {
+                console.log('➕ Adding HOVER command before last command');
+                addCommandBeforeLastCommand(commandToAdd, targetArray, hoverValue);
+            } else {
+                console.log('➕ Adding HOVER command to test case');
+                addCommandAuto(commandToAdd, targetArray, hoverValue);
+            }
+            
+            console.log('✅ HOVER command successfully added to test case');
+            
+            // Send confirmation back to content script
+            return { success: true, message: 'Hover action recorded successfully', commandAdded: commandToAdd };
         }
 
         //handle choose ok/cancel confirm

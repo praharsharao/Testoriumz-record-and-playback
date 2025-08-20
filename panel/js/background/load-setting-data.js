@@ -12,6 +12,12 @@ async function setDefaultSettingData(){
                 locator: ["id", "xpath", "css"],
                 excludeCommands: ["verifyElementPresent", "verifyElementNotPresent", "assertElementPresent", "assertElementNotPresent"],
             },
+            "timeouts": {
+                "selfHealingTimeout": 5000,        // 5 seconds for self-healing attempts
+                "implicitWaitTimeout": 15000,      // 15 seconds for implicit waits
+                "elementReadinessTimeout": 2000,   // 2 seconds for element readiness check
+                "pageLoadTimeout": 30000           // 30 seconds for page load
+            },
             "tracking": true,
         }
     });

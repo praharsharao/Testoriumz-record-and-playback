@@ -19,6 +19,14 @@ import { appendAddVariableButton, appendValueContextMenu } from "./global-profil
 import { addProfileLinkForCommandValue } from "./global-profile-link-for-command-value.js";
 
 function addCommand(command_name, command_target_array, command_value, auto, insertCommand) {
+    console.log('🎯 addCommand called with:', {
+        command: command_name,
+        target: command_target_array,
+        value: command_value,
+        auto: auto,
+        insertCommand: insertCommand
+    });
+    
     // create default test suite and case if necessary
     const selectedTestSuite = getSelectedSuite()
     const selectedTestCase = getSelectedCase();
@@ -26,6 +34,7 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
     let testSuite;
     let testCase;
     if (!selectedTestSuite) {
+        console.log('📁 Creating new test suite');
         testSuite = createTestSuite("Untitled Test Suite");
         renderNewTestSuite("Untitled Test Suite", testSuite.id);
         trackingCreateTestSuite('Record', 'Untitled Test Case');
@@ -34,6 +43,7 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
         testSuite = findTestSuiteById(testSuiteID);
     }
     if (!selectedTestCase) {
+        console.log('📄 Creating new test case');
         testCase = createTestCase("Untitled Test Case", testSuite);
         renderNewTestCase("Untitled Test Case", testCase.id);
         trackingCreateTestCase('Record', 'Untitled Test Case');
@@ -42,10 +52,11 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
         testCase = findTestCaseById(testCaseID);
     }
 
+    console.log('✅ Test case ready:', testCase.name);
+
     const targetList = command_target_array.map(target => target[0]);
 
     const testCommand = new TestCommand(command_name, targetList[0], targetList, command_value);
-
 
     // mark modified
     modifyCaseSuite();
@@ -63,7 +74,6 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
         input.id = "records-count";
         document.getElementById("records-grid").appendChild(input);
     }
-
 
     // var selected_ID = getSelectedRecord();
     // NOTE: change new API for get selected records
@@ -138,21 +148,44 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
     }
     addProfileLinkForCommandValue(new_record);
     saveOldCase();
+    
+    // Return the created command object
+    return testCommand;
 }
 
 // add command manually (append downward)
 function addCommandManu(command_name, command_target_array, command_value) {
-    addCommand(command_name, command_target_array, command_value, 0, false);
+    return addCommand(command_name, command_target_array, command_value, 0, false);
 }
 
 // add command before last command (append upward)
 function addCommandBeforeLastCommand(command_name, command_target_array, command_value) {
-    addCommand(command_name, command_target_array, command_value, 0, true);
+    // Convert to Robot Framework commands if enabled
+    if (window.loadRobotFrameworkCommands && typeof convertToRobotFrameworkCommand === 'function') {
+        const converted = convertToRobotFrameworkCommand(command_name, command_target_array, command_value);
+        return addCommand(converted.command, converted.target, converted.value, 0, true);
+    } else {
+        return addCommand(command_name, command_target_array, command_value, 0, true);
+    }
 }
 
 // add command automatically (append downward)
 function addCommandAuto(command_name, command_target_array, command_value) {
-    addCommand(command_name, command_target_array, command_value, 1, false);
+    console.log('🎯 addCommandAuto called with:', {
+        command: command_name,
+        target: command_target_array,
+        value: command_value
+    });
+    
+    // Convert to Robot Framework commands if enabled
+    if (window.loadRobotFrameworkCommands && typeof convertToRobotFrameworkCommand === 'function') {
+        const converted = convertToRobotFrameworkCommand(command_name, command_target_array, command_value);
+        console.log('🔄 Converted to Robot Framework command:', converted);
+        return addCommand(converted.command, converted.target, converted.value, 1, false);
+    } else {
+        console.log('➕ Adding command directly to test case');
+        return addCommand(command_name, command_target_array, command_value, 1, false);
+    }
 }
 
 export { addCommand, addCommandManu, addCommandAuto, addCommandBeforeLastCommand }

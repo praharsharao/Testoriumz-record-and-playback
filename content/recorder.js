@@ -65,6 +65,19 @@ class Recorder {
             }
             register.call(this);
         }
+        
+        // Dispatch custom event to notify enhanced dropdown recorder
+        if (typeof window !== 'undefined' && window.document) {
+            window.document.dispatchEvent(new CustomEvent('recordingStarted'));
+        }
+        
+        // Initialize enhanced hover recorder if available
+        if (typeof window !== 'undefined' && window.enhancedHoverRecorder) {
+            window.enhancedHoverRecorder.isRecording = true;
+            console.log('Enhanced hover recorder activated');
+        } else {
+            console.log('Enhanced hover recorder not available yet');
+        }
     }
 
     // This part of code is copyright by Software Freedom Conservancy(SFC)
@@ -80,6 +93,17 @@ class Recorder {
             this.window.document.removeEventListener(eventName, this.eventListeners[eventKey], capture);
         }
         delete this.eventListeners;
+        
+        // Dispatch custom event to notify enhanced dropdown recorder
+        if (typeof window !== 'undefined' && window.document) {
+            window.document.dispatchEvent(new CustomEvent('recordingStopped'));
+        }
+        
+        // Deactivate enhanced hover recorder if available
+        if (typeof window !== 'undefined' && window.enhancedHoverRecorder) {
+            window.enhancedHoverRecorder.isRecording = false;
+            window.enhancedHoverRecorder.clearHover();
+        }
     }
 
     getFrameLocation(currentWindow = window) {
@@ -102,12 +126,28 @@ class Recorder {
     record(command, target, value, insertBeforeLastCommand, actualFrameLocation) {
         let self = this;
         if (!target[0].some(e => e?.includes instanceof Function && e.includes('popupInjectionKR'))) {
+            // Get enhanced settings if available
+            let enhancedSettings = {};
+            if (window.enhancedHoverRecorder) {
+                enhancedSettings = {
+                    includeValidations: window.enhancedHoverRecorder.includeValidations || false,
+                    includeScreenshots: window.enhancedHoverRecorder.includeScreenshots || false,
+                    includeLogging: window.enhancedHoverRecorder.includeLogging || false,
+                    includeIfElse: window.enhancedHoverRecorder.includeIfElse || false
+                };
+            }
+            
             browser.runtime.sendMessage({
                 command: command,
                 target: target,
                 value: value,
                 insertBeforeLastCommand: insertBeforeLastCommand,
                 frameLocation: (actualFrameLocation != undefined) ? actualFrameLocation : this.frameLocation,
+                // Include enhanced settings for Robot Framework export
+                includeValidations: enhancedSettings.includeValidations,
+                includeScreenshots: enhancedSettings.includeScreenshots,
+                includeLogging: enhancedSettings.includeLogging,
+                includeIfElse: enhancedSettings.includeIfElse
             }).catch(function (reason) {
                 // If receiving end does not exist, detach the recorder
                 /* KAT-BEGIN remove self.detach
@@ -142,3 +182,51 @@ function startShowElement(message, sender, sendResponse) {
     }
 }
 browser.runtime.onMessage.addListener(startShowElement);
+
+// Enhanced dropdown detection
+// Load the dropdown detector script
+const dropdownDetectorScript = document.createElement('script');
+dropdownDetectorScript.src = browser.runtime.getURL('content/dropdown-detector.js');
+dropdownDetectorScript.onload = function() {
+    console.log('Dropdown detector loaded successfully');
+};
+document.head.appendChild(dropdownDetectorScript);
+
+// Enhanced hover recorder - initialize directly in content script
+// The enhanced hover recorder is now loaded as a content script, so we just need to ensure it's activated
+if (typeof window !== 'undefined' && window.enhancedHoverRecorder) {
+    console.log('Enhanced hover recorder already loaded');
+    // Ensure it's properly integrated if recording is already active
+    if (recorder.attached) {
+        window.enhancedHoverRecorder.isRecording = true;
+        console.log('Enhanced hover recorder activated for existing recording session');
+    }
+} else {
+    console.log('Enhanced hover recorder will be loaded as content script');
+    // Set up a listener for when the enhanced hover recorder becomes available
+    const checkHoverRecorder = setInterval(() => {
+        if (window.enhancedHoverRecorder) {
+            console.log('Enhanced hover recorder now available');
+            clearInterval(checkHoverRecorder);
+            // Ensure it's properly integrated if recording is active
+            if (recorder.attached) {
+                window.enhancedHoverRecorder.isRecording = true;
+                console.log('Enhanced hover recorder activated for existing recording session');
+            }
+        }
+    }, 100);
+    
+    // Stop checking after 10 seconds
+    setTimeout(() => {
+        clearInterval(checkHoverRecorder);
+    }, 10000);
+}
+
+// Enhanced dropdown recorder
+// Load the enhanced dropdown recorder script
+const enhancedDropdownRecorderScript = document.createElement('script');
+enhancedDropdownRecorderScript.src = browser.runtime.getURL('content/enhanced-dropdown-recorder.js');
+enhancedDropdownRecorderScript.onload = function() {
+    console.log('Enhanced dropdown recorder loaded successfully');
+};
+document.head.appendChild(enhancedDropdownRecorderScript);

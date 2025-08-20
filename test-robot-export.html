@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TestoriumZ Robot Framework Export Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin: 5px;
+            width: 250px;
+        }
+        select {
+            padding: 8px;
+            margin: 5px;
+            width: 250px;
+        }
+        .result {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #4CAF50;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TestoriumZ Robot Framework Export Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Form Elements</h2>
+        <form id="testForm">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" placeholder="Enter username">
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Enter password">
+            </div>
+            <div>
+                <label for="dropdown">Select Option:</label>
+                <select id="dropdown" name="dropdown">
+                    <option value="">-- Select --</option>
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" id="submitBtn">Submit</button>
+                <button type="button" id="resetBtn">Reset</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Hover Elements</h2>
+        <div id="hoverBox1" style="width: 100px; height: 100px; background-color: #f44336; margin: 10px; display: inline-block;">
+            Hover Box 1
+        </div>
+        <div id="hoverBox2" style="width: 100px; height: 100px; background-color: #2196F3; margin: 10px; display: inline-block;">
+            Hover Box 2
+        </div>
+        <div id="hoverBox3" style="width: 100px; height: 100px; background-color: #FFC107; margin: 10px; display: inline-block;">
+            Hover Box 3
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Result</h2>
+        <div class="result" id="result">
+            Actions will be displayed here...
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form elements
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const dropdown = document.getElementById('dropdown');
+            const submitBtn = document.getElementById('submitBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const result = document.getElementById('result');
+            
+            // Hover elements
+            const hoverBox1 = document.getElementById('hoverBox1');
+            const hoverBox2 = document.getElementById('hoverBox2');
+            const hoverBox3 = document.getElementById('hoverBox3');
+            
+            // Event listeners
+            usernameInput.addEventListener('input', function() {
+                logAction('Username input: ' + this.value);
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                logAction('Password input: ' + '*'.repeat(this.value.length));
+            });
+            
+            dropdown.addEventListener('change', function() {
+                logAction('Dropdown selected: ' + this.options[this.selectedIndex].text);
+            });
+            
+            submitBtn.addEventListener('click', function() {
+                logAction('Form submitted!');
+                alert('Form submitted successfully!');
+            });
+            
+            resetBtn.addEventListener('click', function() {
+                usernameInput.value = '';
+                passwordInput.value = '';
+                dropdown.selectedIndex = 0;
+                logAction('Form reset!');
+            });
+            
+            // Hover events
+            hoverBox1.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#D32F2F';
+                logAction('Hovering over Box 1');
+            });
+            
+            hoverBox1.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '#f44336';
+            });
+            
+            hoverBox2.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#1976D2';
+                logAction('Hovering over Box 2');
+            });
+            
+            hoverBox2.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '#2196F3';
+            });
+            
+            hoverBox3.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#FFA000';
+                logAction('Hovering over Box 3');
+            });
+            
+            hoverBox3.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '#FFC107';
+            });
+            
+            // Helper function
+            function logAction(message) {
+                result.textContent = message;
+                console.log(message);
+            }
+        });
+    </script>
+</body>
+</html> 

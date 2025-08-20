@@ -77,10 +77,31 @@ const getPossibleTargetList = async (currentCommand) => {
   return possibleCommandTargets;
 }
 
+const getTimeoutSettings = async () => {
+  let settingData = await browser.storage.local.get("setting");
+  if (isObjectEmpty(settingData)) {
+    return {
+      selfHealingTimeout: 5000,
+      implicitWaitTimeout: 15000,
+      elementReadinessTimeout: 2000,
+      pageLoadTimeout: 30000
+    };
+  }
+  settingData = settingData.setting;
+  let timeoutSettings = settingData["timeouts"] || {};
+  return {
+    selfHealingTimeout: timeoutSettings.selfHealingTimeout || 5000,
+    implicitWaitTimeout: timeoutSettings.implicitWaitTimeout || 15000,
+    elementReadinessTimeout: timeoutSettings.elementReadinessTimeout || 2000,
+    pageLoadTimeout: timeoutSettings.pageLoadTimeout || 30000
+  };
+}
+
 export {
   getPossibleTargetList,
   getSelfHealingSettingLocatorsList,
   isSelfHealingEnable,
   isCommandExcluded,
   isSelfHealingTabDisplay,
+  getTimeoutSettings,
 }

@@ -896,16 +896,16 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
         ) {
           let commandExcluded = await isCommandExcluded(commandName);
           if (enableSelfHealing && !commandExcluded) {
-            if (implicitTime && Date.now() - implicitTime > 1000) {
+            if (implicitTime && Date.now() - implicitTime > 5000) {
               implicitCount = 0;
               implicitTime = "";
               if (possibleTargets.length > 0) {
                 let nextTarget = possibleTargets.shift();
                 logger.info(
-                  `Cannot find element ${commandTarget} after 1000ms switch to ${nextTarget}`
+                  `Cannot find element ${commandTarget} after 5000ms switch to ${nextTarget}`
                 );
                 socketLog.emit("logger", {
-                  mess: `Cannot find element ${commandTarget} after 1000ms switch to ${nextTarget}`,
+                  mess: `Cannot find element ${commandTarget} after 5000ms switch to ${nextTarget}`,
                   type: "info",
                 });
                 return runCommand(
@@ -939,10 +939,10 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
               );
             }
           } else {
-            if (implicitTime && Date.now() - implicitTime > 10000) {
-              logger.error("Implicit Wait timed out after 10000ms");
+            if (implicitTime && Date.now() - implicitTime > 15000) {
+              logger.error("Implicit Wait timed out after 15000ms");
               socketLog.emit("logger", {
-                mess: `Implicit Wait timed out after 10000ms`,
+                mess: `Implicit Wait timed out after 15000ms`,
                 type: "error",
               });
               implicitCount = 0;
@@ -952,8 +952,8 @@ async function runCommand(commands, commandName, commandTarget, commandValue) {
               if (implicitCount === 1) {
                 logger.info("Wait until the element is found");
                 socketLog.emit("logger", {
-                  mess: `Implicit Wait timed out after 10000ms`,
-                  type: "error",
+                  mess: `Wait until the element is found`,
+                  type: "info",
                 });
                 implicitTime = Date.now();
               }
@@ -1042,6 +1042,49 @@ function handleFormatCommand(message, sender, response) {
         mess: "echo: " + message.echoStr,
         type: "info",
       });
+    }
+  }
+}
+
+// Helper function to add explicit wait before element interactions
+async function waitForElementReadiness(commandName, commandTarget) {
+  // Add explicit wait for element interactions that commonly fail
+  const elementCommands = ['click', 'clickElement', 'doubleClick', 'mouseOver', 'mouseover'];
+  const isElementCommand = elementCommands.some(cmd => commandName.toLowerCase().includes(cmd));
+  
+  if (isElementCommand && commandTarget) {
+    // Wait for element to be present and visible
+    try {
+      await new Promise((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 10; // 2 seconds total (10 * 200ms)
+        
+        const checkElement = () => {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            resolve(); // Continue anyway after timeout
+            return;
+          }
+          
+          // Send a check command to see if element exists
+          extCommand.sendCommand("isElementPresent", commandTarget, "")
+            .then(result => {
+              if (result.result === "success" || result.result === "true") {
+                resolve();
+              } else {
+                setTimeout(checkElement, 200);
+              }
+            })
+            .catch(() => {
+              setTimeout(checkElement, 200);
+            });
+        };
+        
+        checkElement();
+      });
+    } catch (error) {
+      // Continue execution even if wait fails
+      console.warn("Element readiness check failed:", error);
     }
   }
 }

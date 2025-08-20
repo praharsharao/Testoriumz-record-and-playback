@@ -44,7 +44,8 @@ class KSExportDialog extends GenericDialog {
               <option value="cs-wd-mstest">C# (WebDriver + MSTest)</option>
               <option value="cs-wd-nunit">C# (WebDriver + NUnit)</option>
               <option value="python-appdynamics">Python (AppDynamics)</option>
-              <option value="robot">Robot Framework</option>
+              <option value="robot">Robot Framework (Legacy)</option>
+              <option value="new-formatter-robotframework">Robot Framework (SeleniumLibrary)</option>
               <option value="ruby-wd-rspec">Ruby (WebDriver + RSpec)</option>
               <option value="xml">XML</option>
               <option value="new-formatter-dynatrace">JSON (Dynatrace Synthetics)</option>

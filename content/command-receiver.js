@@ -74,6 +74,39 @@ function doCommands(request, sender, sendResponse, type) {
                     capturedScreenshotTitle: request.target
                 });
             });
+        } else if (request.commands === 'hover' || request.commands === 'mouseOver') {
+            // Handle hover commands
+            try {
+                document.body.setAttribute("SideeXPlayingFlag", true);
+                let element = selenium.findElement(request.target);
+                if (element) {
+                    // Simulate hover by dispatching mouseover event
+                    const mouseoverEvent = new MouseEvent('mouseover', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    element.dispatchEvent(mouseoverEvent);
+                    
+                    // If duration is specified, wait before continuing
+                    if (request.duration && request.duration > 0) {
+                        setTimeout(() => {
+                            document.body.removeAttribute("SideeXPlayingFlag");
+                            sendResponse({result: "success"});
+                        }, request.duration);
+                    } else {
+                        document.body.removeAttribute("SideeXPlayingFlag");
+                        sendResponse({result: "success"});
+                    }
+                } else {
+                    document.body.removeAttribute("SideeXPlayingFlag");
+                    sendResponse({result: "Element not found: " + request.target});
+                }
+            } catch(e) {
+                document.body.removeAttribute("SideeXPlayingFlag");
+                sendResponse({result: e.message});
+                console.warn(e);
+            }
         } else {
             var upperCase = request.commands.charAt(0).toUpperCase() + request.commands.slice(1);
             if (selenium["do" + upperCase] != null) {
